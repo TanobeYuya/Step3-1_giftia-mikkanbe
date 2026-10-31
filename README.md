@@ -13,4 +13,6 @@ Tech0 Step3-1。毎週配布されるコードをもとに、`giftia/` 配下で
 
 ## 進捗ダッシュボード
 
-公開後に URL を追記する。
+チーム MTG と成果発表の予定、Issue と PR の状況を、1 枚のページで見られる。
+
+<https://tanobeyuya.github.io/Step3-1_giftia-mikkanbe/>
