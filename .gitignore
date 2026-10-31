@@ -6,7 +6,7 @@
 !.env.sample
 !.env.template
 
-# giftia 以外は上げない（課題保管用・資料）
+# 配布物・課題メモ・資料は上げない（課題保管用）
 /1020/
 /1027/
 /Claude_Code_導入ガイド.pptx
