@@ -1,0 +1,58 @@
+# 進捗ダッシュボードを GitHub Pages に公開する。
+# リポジトリ変数 DASHBOARD_ENABLED が true のときだけ動く（ひな形そのものでは動かない）。
+# 前提: Settings → Pages の Source が「GitHub Actions」であること（手順は docs/dashboard.md）。
+#
+# 安全のための決まり:
+#  - PR のコードは実行しない。pull_request_target は、デフォルトブランチのコードで動く（checkout に ref を指定しない）。
+#  - 使う Action は、GitHub 公式（actions/*）だけ。
+#  - 権限は、読み取りと、Pages への公開だけ。
+name: dashboard-pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dashboard/**'
+      - '.claude/project.json'
+      - 'scripts/build-dashboard.js'
+      - 'scripts/vendor/**'
+      - '.github/workflows/pages.yml'
+  issues:
+  milestone:
+  pull_request_target:
+    types: [opened, reopened, closed, ready_for_review, converted_to_draft, review_requested, review_request_removed]
+  schedule:
+    - cron: '17 */3 * * *' # 3 時間ごと。リポジトリに 60 日間動きがないと、GitHub が定期実行を止める
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  issues: read
+  pull-requests: read
+
+concurrency:
+  group: dashboard-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: ${{ vars.DASHBOARD_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - name: ダッシュボードを作る
+        run: node scripts/build-dashboard.js --out _site
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DASHBOARD_ALLOW_PRIVATE: ${{ vars.DASHBOARD_ALLOW_PRIVATE }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

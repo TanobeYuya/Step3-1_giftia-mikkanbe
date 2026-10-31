@@ -1,0 +1,42 @@
+{
+  "_comment": "機能ごとのファイルの一覧表。apply.sh・update.sh・adopt-template スキルが読む。base が true の機能は、他の機能が持つファイルを自動で除く。files と exclude の末尾が / のものはフォルダ。projectFiles は、プロジェクトごとに内容が変わるので、update.sh が上書きしない。gitignore の行は、導入先の .gitignore に無いものだけ追記する。",
+  "modules": {
+    "core": {
+      "title": "基本",
+      "summary": "CLAUDE.md、フック、スキル、エージェント、規約、git フック",
+      "base": true,
+      "recommend": "always",
+      "files": ["CLAUDE.md", ".claude/", ".githooks/", "scripts/"],
+      "exclude": [".claude/settings.local.json", ".claude/state/", "scripts/apply.sh", "scripts/test-modules.js", "scripts/test-dashboard.js"],
+      "projectFiles": ["CLAUDE.md", ".claude/project.json", ".claude/settings.json"],
+      "gitignore": [".claude/settings.local.json", ".claude/state/", ".env", ".env.*", "!.env.example", "!.env.sample", "!.env.template"]
+    },
+    "secrets": {
+      "title": "機密情報の保護（公開リポジトリ向け）",
+      "summary": "履歴の機密スキャン、公開前チェックリスト、public-check スキル",
+      "recommend": "public",
+      "files": ["scripts/scan-history.js", "docs/public-repo-checklist.md", ".claude/skills/public-check/"],
+      "exclude": [],
+      "projectFiles": [],
+      "gitignore": ["local.settings.json", "*.pem", "*.pfx", ".azure/"]
+    },
+    "dashboard": {
+      "title": "進捗ダッシュボード（GitHub Pages）",
+      "summary": "チーム・日程・WBS・Issue と PR の状況・資料リンクを、1 枚の公開ページにする",
+      "recommend": "public",
+      "files": [
+        "dashboard/",
+        "scripts/build-dashboard.js",
+        "scripts/vendor/",
+        ".github/workflows/pages.yml",
+        ".github/workflows/dashboard-check.yml",
+        "docs/dashboard.md",
+        "docs/dashboard-wording.md",
+        ".claude/skills/adopt-template/references/dashboard.md"
+      ],
+      "exclude": [],
+      "projectFiles": ["dashboard/data/schedule.yml", "dashboard/data/links.json"],
+      "gitignore": ["_site/"]
+    }
+  }
+}
