@@ -1,0 +1,18 @@
+.claude/settings.local.json
+.claude/state/
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+
+# giftia 以外は上げない（課題保管用・資料）
+/1020/
+/1027/
+/Claude_Code_導入ガイド.pptx
+/claude-env-guard.zip
+local.settings.json
+*.pem
+*.pfx
+.azure/
+_site/

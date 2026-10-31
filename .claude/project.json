@@ -1,0 +1,174 @@
+{
+  "_comment": "プロジェクト固有の値。フック(.claude/hooks)とスキル(gh-flow, kickoff, evidence 等)がここを読む。空欄は推測で埋めず、必要になったらユーザーに質問する。",
+  "project": {
+    "name": "Step3-1 Giftia 実装",
+    "purpose": "毎週配布されるコードをもとに、giftia/ 配下で自分でコードを書き、ギフト EC の Giftia を実装する"
+  },
+  "template": {
+    "_comment": "scripts/update.sh が最新のひな形を取り込むときに使う。init.sh・apply.sh が記録する。modules は導入済みの機能（apply.sh・adopt-template が記録し、update.sh が読む）。promoteHints: Claude の設定を変更したときに、汎用的な考え方をひな形の Issue に記録するか。",
+    "source": "https://github.com/TanobeYuya/claude-project-template.git",
+    "version": "1b9faa6f6e37e3aaf1c2c2866ea44121976e1c1f",
+    "modules": [
+      "core",
+      "secrets",
+      "dashboard"
+    ],
+    "promoteHints": true
+  },
+  "ux": {
+    "_comment": "progressEvery: ツールを何回呼ぶたびに、日本語で進捗をユーザーに伝えるか（0 で無効）。",
+    "progressEvery": 5
+  },
+  "team": {
+    "_comment": "self: true が作業者本人（敬称を付けない）。役割はプロジェクトごとに変わるので空にしてある。name はチーム名。members の name はニックネームで、本名は入れない（公開ページに表示される）。name・github・role が空の枠は未設定で、担当の判断が必要になったら質問する。advisors は相談役で Issue のアサイン対象にしない。issueCloser は Issue の完了確認を行う役割名。",
+    "name": "みっかんべー",
+    "members": [
+      {
+        "name": "べー",
+        "github": "TanobeYuya",
+        "role": "",
+        "scope": "",
+        "self": true
+      },
+      {
+        "name": "みかん",
+        "github": "mikan23",
+        "role": "",
+        "scope": ""
+      },
+      {
+        "name": "あかぷ",
+        "github": "akapuu14-bit",
+        "role": "",
+        "scope": ""
+      },
+      {
+        "name": "",
+        "github": "",
+        "role": "",
+        "scope": ""
+      }
+    ],
+    "advisors": [],
+    "issueCloser": ""
+  },
+  "git": {
+    "baseBranch": "main",
+    "protectedBranches": [
+      "main",
+      "master"
+    ],
+    "branchPatterns": [
+      "feature/issue-{n}-{slug}",
+      "fix/issue-{n}-{slug}",
+      "docs/{slug}",
+      "chore/{slug}"
+    ],
+    "commitTypes": [
+      "feat",
+      "fix",
+      "docs",
+      "chore",
+      "test",
+      "refactor"
+    ],
+    "commitScopes": {
+      "frontend": "giftia/giftia-frontend/",
+      "backend": "giftia/backend/",
+      "db": "supabase/",
+      "docs": "docs/",
+      "dashboard": "dashboard/、.github/（進捗ダッシュボードの画面とワークフロー）",
+      "claude": "CLAUDE.md、.claude/、scripts/（Claude Code の設定とひな形）"
+    },
+    "requireIssueNumberInCommit": false,
+    "issueRequiredFor": [
+      "feat",
+      "fix"
+    ],
+    "issuePrefixes": [
+      "[PM]",
+      "[Front]",
+      "[Back]",
+      "[QA]"
+    ],
+    "mergeMethod": "squash",
+    "_comment_review": "lightChangePaths だけを変更する PR は軽微とみなし、未承認マージ・自己承認・事前レビューを通す。それ以外の未承認マージと自己承認はユーザーに確認を求める。prePrReview: code（軽微以外は必須）/ all / off",
+    "lightChangePaths": [
+      "**/*.md",
+      "docs/**",
+      "**/evidence/**"
+    ],
+    "requireApprovalBeforeMerge": true,
+    "prePrReview": "code"
+  },
+  "docs": {
+    "_comment": "canonical は矛盾したときに上を優先する順。kickoff・spec-gate・spec-reviewer が読む。",
+    "canonical": [
+      "1020/1周目_Nextjs超Starter_Giftia.pdf",
+      "1027/M3_超FASTAPI-Starter/2周目_FastAPI超Starter_Giftia.pdf",
+      "1020/配布コード/対応表.md",
+      "1027/M3_超FASTAPI-Starter/配布コード/対応表.md"
+    ],
+    "plan": "",
+    "evidenceDir": "evidence/"
+  },
+  "test": {
+    "_comment": "evidence スキルが実行するコマンド。名前: コマンド",
+    "commands": {}
+  },
+  "guards": {
+    "secretPatterns": [
+      {
+        "name": "JWT（Supabase キー等）",
+        "pattern": "eyJ[A-Za-z0-9_-]{20,}\\.[A-Za-z0-9_-]{20,}"
+      },
+      {
+        "name": "OpenAI/Anthropic API キー",
+        "pattern": "sk-(?:ant-)?[A-Za-z0-9_-]{20,}"
+      },
+      {
+        "name": "GitHub トークン",
+        "pattern": "gh[pousr]_[A-Za-z0-9]{30,}"
+      },
+      {
+        "name": "AWS アクセスキー",
+        "pattern": "AKIA[0-9A-Z]{16}"
+      },
+      {
+        "name": "パスワード入りの DB 接続文字列",
+        "pattern": "postgres(?:ql)?://[^\\s:/]+:[^\\s@]+@"
+      },
+      {
+        "name": "秘密鍵",
+        "pattern": "-----BEGIN [A-Z ]*PRIVATE KEY-----"
+      },
+      {
+        "name": "Azure Storage などの接続文字列（AccountKey）",
+        "pattern": "AccountKey=[A-Za-z0-9+/=]{20,}"
+      },
+      {
+        "name": "Azure Service Bus・Event Hubs の共有アクセスキー",
+        "pattern": "SharedAccessKey=[A-Za-z0-9+/=]{20,}"
+      },
+      {
+        "name": "Azure の SAS トークン（sig=）",
+        "pattern": "[?&]sig=[A-Za-z0-9%+/=]{30,}"
+      },
+      {
+        "name": "Azure AD のクライアントシークレット",
+        "pattern": "[A-Za-z0-9_~.-]{3}8Q~[A-Za-z0-9_~.-]{30,}"
+      },
+      {
+        "name": "パスワード入りの接続文字列（SQL Server・Azure SQL・PostgreSQL の Host= 形式など）",
+        "pattern": "(?:server|data source|host)=[^;\\n]+;[^\\n]*(?:password|pwd)=(?!(?:<[^>;\\s]*>|\\$\\{[^};\\s]*\\}|\\{\\{[^};\\s]*\\}\\}|%[A-Za-z_]+%)(?:[;\\s'\"`]|$))[^;\\s]{4,}",
+        "flags": "i"
+      },
+      {
+        "name": "Azure の発行プロファイルのパスワード",
+        "pattern": "userPWD=\"[^\"]{20,}\""
+      }
+    ],
+    "forbiddenInPaths": [],
+    "commandRules": []
+  }
+}

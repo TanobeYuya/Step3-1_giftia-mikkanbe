@@ -1,0 +1,29 @@
+# PR で、進捗ダッシュボードのデータ（schedule.yml・links.json・project.json のメンバー）を検査する。
+# 誤り（担当者・日付・依存・URL・会議リンク・GitHub にないマイルストーンや Issue）があると、失敗する。
+# リポジトリ変数 DASHBOARD_ENABLED が true のときだけ動く。
+name: dashboard-check
+
+on:
+  pull_request:
+    paths:
+      - 'dashboard/**'
+      - '.claude/project.json'
+      - 'scripts/build-dashboard.js'
+      - 'scripts/vendor/**'
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  check:
+    if: ${{ vars.DASHBOARD_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: データを検査する
+        run: node scripts/build-dashboard.js --check --github
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DASHBOARD_ALLOW_PRIVATE: ${{ vars.DASHBOARD_ALLOW_PRIVATE }}

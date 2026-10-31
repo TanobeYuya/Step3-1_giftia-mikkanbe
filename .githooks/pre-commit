@@ -1,0 +1,41 @@
+#!/bin/sh
+# 秘密情報がコミットに入るのを止める（人の操作も含めた最後の防衛線）。
+# 有効化: git config core.hooksPath .githooks（scripts/init.sh が行う）
+
+# ステージした変更がなければ何もしない
+git diff --cached --quiet && exit 0
+
+# 1) .env 系ファイルそのもの（.env.example・.env.sample・.env.template は除く）
+# core.quotePath=false: 日本語などのファイル名を、引用符つきの表記にしない（そのまま照合できるようにする）
+# ACMRT: 追加・コピー・変更・名前の変更・種類の変更。名前の変更（.env.example → .env など）も調べる
+files=$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACMRT)
+bad=$(echo "$files" | grep -E '(^|/)\.env(\.[^/]*)?$' | grep -Ev '(^|/)\.env(\.[^/]*)?\.(example|sample|template)$')
+if [ -n "$bad" ]; then
+  echo "[pre-commit] .env ファイルはコミットできません:"
+  echo "$bad"
+  echo "  → git restore --staged <ファイル> で外してください"
+  exit 1
+fi
+
+# 2) キーらしき文字列（JWT、OpenAI/Anthropic、GitHub トークン、AWS、Azure、DB 接続文字列、秘密鍵）
+# 接続文字列（conn）は、大文字小文字を区別せず、Server=（または Data Source=・Host=）が先に来る形を調べる。
+# パスワードの値が、完全な説明用の形（<名前>・${名前}・{{名前}}・%名前%）のときだけ、値を取り除いてから調べる。
+# 記号で始まるだけの値（$ecret など）は、実際のパスワードかもしれないので、除かない
+conn='(server|data source|host)=[^;]+;.*(password|pwd)=[^; ]{4,}'
+pattern='eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{30,}|AKIA[0-9A-Z]{16}|postgres(ql)?://[^ :/]+:[^ @]+@|-----BEGIN [A-Z ]*PRIVATE KEY-----|AccountKey=[A-Za-z0-9+/=]{20,}|SharedAccessKey=[A-Za-z0-9+/=]{20,}|[?&]sig=[A-Za-z0-9%+/=]{30,}|[A-Za-z0-9_~.-]{3}8Q~[A-Za-z0-9_~.-]{30,}|userPWD="[^"]{20,}"'
+# ファイル名で絞らず、ステージした差分の全体から、追加された行だけを調べる（空白や日本語を含むファイル名、名前の変更を見落とさない）。
+# 除くのは、差分の見出し行（diff --git から最初の @@ まで）だけ。内容が ++ で始まる行は除かない。
+# --no-color などは、色付けや外部の差分表示の設定（color.ui=always など）で行の形が変わり、検査をすり抜けるのを防ぐ
+added=$(git diff --cached --no-color --no-ext-diff --no-textconv -U0 | awk '/^diff --git /{h=1; next} /^@@/{h=0; next} !h && /^\+/{print}')
+# LC_ALL=C: 不正なバイト列（Shift_JIS など）を含む行で、macOS の sed・grep が止まって、検査が行われなくなるのを防ぐ
+hit=$(
+  printf '%s\n' "$added" | LC_ALL=C grep -E -- "$pattern"
+  printf '%s\n' "$added" | LC_ALL=C sed -E 's/([Pp][Aa][Ss][Ss][Ww][Oo][Rr][Dd]|[Pp][Ww][Dd])=(<[^>; ]*>|\$\{[^} ;]*\}|\{\{[^} ;]*\}\}|%[A-Za-z_]+%)/\1=/g' | LC_ALL=C grep -Ei -- "$conn"
+)
+if [ -n "$hit" ]; then
+  echo "[pre-commit] API キーや接続文字列らしき行が含まれています:"
+  echo "$hit" | cut -c1-120
+  echo "  → 値を消して、環境変数に移してください"
+  exit 1
+fi
+exit 0

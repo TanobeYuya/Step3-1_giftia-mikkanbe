@@ -1,0 +1,40 @@
+# 予定と WBS（ガントチャート）。変更は PR で行う。検査: node scripts/build-dashboard.js --check
+# 出どころ: 班のスケジュール表（Google スプレッドシート「3班_みっかんべー_スケジュール」）。仮の入力。
+# 個人の事情にあたる備考は載せていない。
+
+# 発表・提出などの予定（カレンダーに出る）
+#   type: presentation（発表）| deadline（締切）| review（レビュー）| other
+#   time と note は任意。meet は、会議の URL（Google Meet・Zoom・Teams の https のみ）。
+#   注意: 公開ページに載るので、誰でも開ける会議の URL は書かない（参加承認制の会議だけにする）。
+events:
+  - date: "2026-10-24"
+    title: チーム MTG
+    type: other
+    time: "21:00〜"
+  - date: "2026-10-31"
+    title: チーム MTG
+    type: other
+    time: "21:00〜"
+  - date: "2026-11-07"
+    title: チーム MTG
+    type: other
+    time: "21:00〜"
+  - date: "2026-11-14"
+    title: チーム MTG
+    type: other
+    time: "21:00〜"
+  - date: "2026-11-21"
+    title: チーム MTG
+    type: other
+    time: "21:00〜"
+  - date: "2026-11-24"
+    title: 成果発表・プレゼンテーション
+    type: presentation
+
+# WBS のタスク（ガントチャートに出る）
+#   担当者が決まっていないため、空にしている。決まったら PR で追加する。
+#   milestone: GitHub のマイルストーンの名前と同じにする。start・end: YYYY-MM-DD。
+#   assignee: GitHub の ID（project.json のメンバーから選ぶ。必須）。
+#   issue: 紐づく Issue の番号（任意）。Issue が完了していれば、画面では「完了」になる。
+#   status: todo | doing | done（Issue がないときの状態）。depends_on: 先に必要なタスクの id（任意）。
+tasks: []

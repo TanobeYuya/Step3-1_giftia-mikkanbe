@@ -1,0 +1,17 @@
+{
+  "sample": true,
+  "project": {
+    "name": "サンプルプロジェクト",
+    "purpose": "Next.js・FastAPI・Azure を組み合わせて、チームの進捗を見られる Web アプリを作る（サンプルの文面です）"
+  },
+  "repo": "sample-org/sample-project",
+  "team": {
+    "name": "サンプルチーム",
+    "members": [
+      { "name": "あか", "github": "sample-aka", "role": "PM（全体進行・資料）" },
+      { "name": "あお", "github": "sample-ao", "role": "Backend（FastAPI）" },
+      { "name": "みどり", "github": "sample-midori", "role": "Frontend（Next.js）" },
+      { "name": "きい", "github": "sample-kii", "role": "Azure・インフラ" }
+    ]
+  }
+}
