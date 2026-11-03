@@ -217,6 +217,108 @@ cfg.ux.progressEvery = 0;
 fs.writeFileSync(path.join(tmp, '.claude', 'project.json'), JSON.stringify(cfg, null, 2));
 check('progressEvery: 0 で無効', [1, 2, 3, 4, 5].map(() => progress('PostToolUse', 'p3')).includes('report') ? 'report' : 'none', 'none');
 
+console.log('--- qa-log');
+cfg.ux.qaLog = true;
+fs.writeFileSync(path.join(tmp, '.claude', 'project.json'), JSON.stringify(cfg, null, 2));
+function qa(event, session, extra = {}) {
+  const r = spawnSync('node', [path.join(hooks, 'qa-log.js')], {
+    input: JSON.stringify({ cwd: tmp, session_id: session, hook_event_name: event, ...extra }),
+    env: { ...process.env, CLAUDE_PROJECT_DIR: tmp },
+    encoding: 'utf8',
+  });
+  return r.stdout.includes('"decision":"block"') ? 'block' : 'none';
+}
+const qaDir = path.join(tmp, '.claude', 'state', 'qa-log');
+const qaLogs = () => fs.readdirSync(qaDir).filter((f) => f.endsWith('.md'));
+const qaText = () => qaLogs().map((f) => fs.readFileSync(path.join(qaDir, f), 'utf8')).join('\n');
+qa('UserPromptSubmit', 'q1abcd', { prompt: 'verify ca とは？' });
+check('質問がログに追記される', qaText().includes('質問: verify ca とは？') ? 'logged' : 'missing', 'logged');
+check('回答欄は未記入で始まる', /回答: （未記入 #[\w-]+）/.test(qaText()) ? 'pending' : 'missing', 'pending');
+check('Stop では Claude に何も指示しない', qa('Stop', 'q1abcd', { last_assistant_message: 'Verify CA は相手を確かめる設定です。次にサーバー証明書を確認してください。' }), 'none');
+check('Stop でフックが回答欄を記入する（区分と要点）', qaText().includes('回答: 【学習】 Verify CA は相手を確かめる設定です。') ? 'filled' : 'missing', 'filled');
+const filled = qaText();
+qa('Stop', 'q1abcd', { last_assistant_message: '別の回答です。' });
+check('記入済みなら次の停止で書き換えない（二重に書かない）', qaText() === filled ? 'same' : 'changed', 'same');
+qa('UserPromptSubmit', 'q8abcd', { prompt: 'transcript から読む質問' });
+const tr = path.join(tmp, 'transcript.jsonl');
+fs.writeFileSync(
+  tr,
+  [
+    { type: 'user', message: { content: 'transcript から読む質問' } },
+    { type: 'assistant', message: { content: [{ type: 'text', text: '最初の発言' }, { type: 'tool_use', name: 'Read' }] } },
+    { type: 'assistant', message: { content: [{ type: 'text', text: '最後の回答です' }] } },
+  ].map((o) => JSON.stringify(o)).join('\n'),
+  'utf8',
+);
+qa('Stop', 'q8abcd', { transcript_path: tr });
+check('transcript の最後の回答を読む', qaText().includes('回答: 【その他】 最後の回答です') ? 'ok' : 'ng', 'ok');
+qa('UserPromptSubmit', 'q2abcd', { prompt: '2つ目の質問' });
+const lastId = [...qaText().matchAll(/（未記入 (#[\w-]+)）/g)].pop()[1];
+fs.writeFileSync(path.join(qaDir, qaLogs()[0]), qaText().replace(`（未記入 ${lastId}）`, '要点'), 'utf8');
+const manual = qaText();
+qa('Stop', 'q2abcd', { last_assistant_message: '上書きしてはいけない回答です。' });
+check('記入済みの行は Stop で書き換えない', qaText() === manual ? 'same' : 'changed', 'same');
+qa('UserPromptSubmit', 'q10abc', { prompt: 'hotfixとバグ修正の違いはなに？' });
+qa('Stop', 'q10abc', { last_assistant_message: '違いは深刻さです。\n\n次に原典を確認してください。' });
+check('「違い」は【学習】、hotfix には【git】が付き、結論と次にやることが入る', qaText().includes('回答: 【学習】【git】 違いは深刻さです。 次に原典を確認してください。') ? 'ok' : 'ng', 'ok');
+qa('UserPromptSubmit', 'q11abc', { prompt: '進めて' });
+qa('Stop', 'q11abc', { last_assistant_message: '実装しました。' });
+check('「進めて」は【作業】', qaText().includes('回答: 【作業】 実装しました。') ? 'ok' : 'ng', 'ok');
+qa('UserPromptSubmit', 'q12abc', { prompt: 'こんにちは' });
+qa('Stop', 'q12abc', { last_assistant_message: '挨拶です。' });
+check('どれにも当たらなければ【その他】', qaText().includes('回答: 【その他】 挨拶です。') ? 'ok' : 'ng', 'ok');
+qa('UserPromptSubmit', 'q13abc', { prompt: 'キーとは' });
+qa('Stop', 'q13abc', { last_assistant_message: `キーは ${jwt} です。` });
+check('要点の秘密情報は伏せる', qaText().includes(jwt) ? 'leaked' : 'masked', 'masked');
+qa('UserPromptSubmit', 'q14abc', { prompt: '長い回答' });
+qa('Stop', 'q14abc', { last_assistant_message: 'あ'.repeat(300) });
+check('長い要点は100字で切る', qaText().includes('あ'.repeat(101)) ? 'long' : 'cut', 'cut');
+const before = qaText();
+qa('UserPromptSubmit', 'q3abcd', { prompt: '/gh-status' });
+check('スラッシュコマンドは残さない', qaText() === before ? 'skipped' : 'logged', 'skipped');
+qa('UserPromptSubmit', 'q3abcd', { prompt: '<agent-message from="a1">[Subagent hand-back] 記録した</agent-message>' });
+qa('UserPromptSubmit', 'q3abcd', { prompt: '<task-notification><task-id>x</task-id></task-notification>' });
+check('サブエージェント・タスクの通知は残さない', qaText() === before ? 'skipped' : 'logged', 'skipped');
+qa('UserPromptSubmit', 'q4abcd', { prompt: `キーは ${jwt} です` });
+check('秘密情報らしき文字列は残さない', qaText().includes(jwt) ? 'leaked' : 'masked', 'masked');
+qa('UserPromptSubmit', 'q5abcd', { prompt: 'あ'.repeat(300) });
+check('長い質問は200字で切る', qaText().includes('あ'.repeat(201)) ? 'long' : 'cut', 'cut');
+check('サブエージェントの入力は無視', (qa('UserPromptSubmit', 'q6abcd', { prompt: 'サブ', agent_id: 'sub' }), qaText().includes('質問: サブ')) ? 'logged' : 'ignored', 'ignored');
+qa('UserPromptSubmit', 'q15abcdefgh', { prompt: '<ide_opened_file>The user opened a.md</ide_opened_file>タグの後の質問' });
+check('IDE のタグは取り除く', qaText().includes('質問: タグの後の質問') && !qaText().includes('ide_opened_file') ? 'ok' : 'ng', 'ok');
+check('見出しにセッション ID（先頭8文字）を書く', /^## \d{2}:\d{2} 〔s:q15abcde〕$/m.test(qaText()) ? 'ok' : 'ng', 'ok');
+const beforeIde = qaText();
+qa('UserPromptSubmit', 'q16abc', { prompt: '<ide_selection>選択範囲</ide_selection>' });
+check('タグだけの発言は残さない', qaText() === beforeIde ? 'skipped' : 'logged', 'skipped');
+const disabled = spawnSync('node', [path.join(hooks, 'qa-log.js')], {
+  input: JSON.stringify({ cwd: tmp, session_id: 'q17abc', hook_event_name: 'UserPromptSubmit', prompt: '子の claude の質問' }),
+  env: { ...process.env, CLAUDE_PROJECT_DIR: tmp, QA_LOG_DISABLE: '1' },
+  encoding: 'utf8',
+});
+check('QA_LOG_DISABLE で記録しない', disabled.status === 0 && !qaText().includes('子の claude の質問') ? 'off' : 'logged', 'off');
+const qaDate = qaLogs().find((f) => /^\d{4}-\d{2}-\d{2}\.md$/.test(f)).replace('.md', '');
+const dry = spawnSync('node', [path.join(__dirname, 'qa-summarize.js'), qaDate, '--dry-run'], {
+  env: { ...process.env, CLAUDE_PROJECT_DIR: tmp },
+  encoding: 'utf8',
+});
+check('まとめはセッションごとに分ける', /### セッション q15abcde\n- \S+ \d{2}:\d{2} 質問: タグの後の質問/.test(dry.stdout) && dry.stdout.includes('### セッション q1ab') ? 'ok' : 'ng', 'ok');
+cfg.ux.qaLog = false;
+fs.writeFileSync(path.join(tmp, '.claude', 'project.json'), JSON.stringify(cfg, null, 2));
+qa('UserPromptSubmit', 'q7abcd', { prompt: '無効のとき' });
+check('ux.qaLog: false で無効', qaText().includes('質問: 無効のとき') ? 'logged' : 'off', 'off');
+
+fs.writeFileSync(
+  path.join(qaDir, '2026-01-01.md'),
+  '# 質問ログ 2026-01-01\n\n## 09:00\n\n質問: SSL とは？\n回答: 【学習】【SSL】 証明書で相手を確かめる。\n\n' +
+    '## 09:05\n\n質問: gitignore を足して\n回答: 【作業】【git】 済み。\n\n## 09:10\n\n質問: 認証とは？\n回答: 【学習】【認証】 本人確認。\n',
+  'utf8',
+);
+const extract = (...args) =>
+  spawnSync('node', [path.join(root, 'scripts', 'qa-extract.js'), ...args], { env: { ...process.env, CLAUDE_PROJECT_DIR: tmp }, encoding: 'utf8' }).stdout;
+check('qa-extract: 学習だけを抜き出す', extract('学習').includes('SSL とは？') && extract('学習').includes('認証とは？') && !extract('学習').includes('gitignore') ? 'ok' : 'ng', 'ok');
+check('qa-extract: テーマで絞る', extract('学習', 'SSL').includes('SSL とは？') && !extract('学習', 'SSL').includes('認証とは？') ? 'ok' : 'ng', 'ok');
+check('qa-extract: 該当なしでも落ちない', extract('学習', '存在しないテーマ').includes('記録はありません') ? 'ok' : 'ng', 'ok');
+
 console.log('--- session-start の出力');
 const s = spawnSync('node', [path.join(hooks, 'session-start.js')], {
   input: JSON.stringify({ cwd: tmp }),
