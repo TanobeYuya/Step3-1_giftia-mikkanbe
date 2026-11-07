@@ -14,7 +14,7 @@ const tpl = cfg.template || {};
 if (!tpl.source || tpl.promoteHints === false) process.exit(0);
 
 const rel = relPath(dir, (input.tool_input || {}).file_path || '');
-const targets = ['CLAUDE.md', '.claude/skills/**', '.claude/agents/**', '.claude/rules/**', '.claude/hooks/**'];
+const targets = ['CLAUDE.md', 'AGENTS.md', '.claude/skills/**', '.claude/agents/**', '.claude/rules/**', '.claude/hooks/**'];
 if (!targets.some((g) => globToRegExp(g).test(rel))) process.exit(0);
 
 const stateDir = path.join(dir, '.claude', 'state', 'promote-hints');

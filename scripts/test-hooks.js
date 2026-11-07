@@ -182,6 +182,7 @@ function hint(file, session, projectDir = tmp) {
 check('CLAUDE.md を変更', hint('CLAUDE.md', 's1'), 'hint');
 check('同じセッションで同じファイルをもう一度', hint('CLAUDE.md', 's1'), 'none');
 check('スキルを追加', hint('.claude/skills/new-skill/SKILL.md', 's1'), 'hint');
+check('AGENTS.md を変更', hint('AGENTS.md', 's1'), 'hint');
 check('アプリのコードを変更', hint('app/backend/main.py', 's1'), 'none');
 check('作業用 clone の中を変更', hint('.claude/state/template-work/CLAUDE.md', 's1'), 'none');
 check('別のセッションで CLAUDE.md', hint('CLAUDE.md', 's2'), 'hint');
