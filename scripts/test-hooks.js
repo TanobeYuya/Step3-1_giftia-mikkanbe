@@ -84,6 +84,8 @@ const commitFile = (f) => {
 };
 commitFile('docs/guide.md');
 check('文書だけの PR はレビューなしで作成可', bash('gh pr create --title t --body b'), 'allow');
+commitFile('docs/mtg/議事録.md');
+check('日本語のファイル名の文書だけの PR もレビューなしで作成可', bash('gh pr create --title t --body b'), 'allow');
 commitFile('app/backend/main.py');
 check('コード変更でレビュー記録なし', bash('gh pr create --title t --body b'), 'deny');
 const head = git('rev-parse', 'HEAD').trim();
