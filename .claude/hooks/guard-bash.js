@@ -104,7 +104,8 @@ if (/\bgit\s+(?:-C\s+\S+\s+)?commit\b/.test(cmd) && (git.commitTypes || []).leng
 const prCreate = /\bgh\s+pr\s+create\b/.test(cmd);
 if (prCreate && (git.prePrReview || 'code') !== 'off') {
   const base = git.baseBranch || 'main';
-  const files = (run('git', ['diff', '--name-only', `origin/${base}...HEAD`], dir) || '').split('\n').filter(Boolean);
+  // core.quotePath=false: 日本語のファイル名を引用符つきのエスケープ表記にしない（lightChangePaths と照合できるようにする）
+  const files = (run('git', ['-c', 'core.quotePath=false', 'diff', '--name-only', `origin/${base}...HEAD`], dir) || '').split('\n').filter(Boolean);
   const skip = git.prePrReview !== 'all' && isLightChange(cfg, files);
   if (!skip) {
     const head = run('git', ['rev-parse', 'HEAD'], dir);
