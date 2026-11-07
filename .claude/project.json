@@ -105,9 +105,9 @@
     "_comment": "canonical は矛盾したときに上を優先する順。kickoff・spec-gate・spec-reviewer が読む。",
     "canonical": [
       "1020/1周目_Nextjs超Starter_Giftia.pdf",
-      "1027/M3_超FASTAPI-Starter/2周目_FastAPI超Starter_Giftia.pdf",
+      "1027/03_M3_超FASTAPI-Starter/2周目_FastAPI超Starter_Giftia.pdf",
       "1020/配布コード/対応表.md",
-      "1027/M3_超FASTAPI-Starter/配布コード/対応表.md"
+      "1027/03_M3_超FASTAPI-Starter/配布コード/対応表.md"
     ],
     "plan": "",
     "evidenceDir": "evidence/"
