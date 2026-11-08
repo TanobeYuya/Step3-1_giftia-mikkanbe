@@ -36,7 +36,8 @@ Tech0 Step3-1。毎週配布されるコードをもとに、`giftia/` 配下で
 
 1. 各週の配布資料（PDF）— `1020/1周目_Nextjs超Starter_Giftia.pdf`、`1027/03_M3_超FASTAPI-Starter/2周目_FastAPI超Starter_Giftia.pdf`
 2. 各週の `対応表.md` — 配布コードの置き場所と、仕様とコードの対応
-3. 本ファイル
+3. 班の要件定義書・仕様設計書 — `docs/要件定義書/クラス1_3班_みっかんべー_要件定義書.md`、`docs/設計書/クラス1_3班_みっかんべー_仕様設計書.md`（配布コードに足す機能の根拠）
+4. 本ファイル
 
 一覧は project.json の docs.canonical。`1020/`・`1027/` は GitHub に載らないため、1 と 2 の正本はローカルだけにある。
 
