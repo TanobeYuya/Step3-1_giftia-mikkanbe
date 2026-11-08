@@ -26,21 +26,21 @@
       {
         "name": "べー",
         "github": "TanobeYuya",
-        "role": "",
+        "role": "PM・QA",
         "scope": "",
         "self": true
       },
       {
         "name": "みかん",
         "github": "mikan23",
-        "role": "",
-        "scope": ""
+        "role": "フロントエンド",
+        "scope": "giftia/giftia-frontend/"
       },
       {
         "name": "あかぷ",
         "github": "akapuu14-bit",
-        "role": "",
-        "scope": ""
+        "role": "バックエンド",
+        "scope": "giftia/backend/"
       },
       {
         "name": "",
@@ -121,7 +121,9 @@
       "1020/1周目_Nextjs超Starter_Giftia.pdf",
       "1027/03_M3_超FASTAPI-Starter/2周目_FastAPI超Starter_Giftia.pdf",
       "1020/配布コード/対応表.md",
-      "1027/03_M3_超FASTAPI-Starter/配布コード/対応表.md"
+      "1027/03_M3_超FASTAPI-Starter/配布コード/対応表.md",
+      "docs/要件定義書/クラス1_3班_みっかんべー_要件定義書.md",
+      "docs/設計書/クラス1_3班_みっかんべー_仕様設計書.md"
     ],
     "plan": "",
     "evidenceDir": "evidence/"
