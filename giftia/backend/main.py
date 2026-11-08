@@ -1,7 +1,4 @@
-# main.py — Giftia 検索API（2週目・穴埋め版）
-# 【穴1】〜【穴4】を、対応表と公式ドキュメント・データ定義.md を頼りに自分で埋める。
-# 埋めるまでは ___ が残っていて動かない（/api/search を呼ぶと 500 になり、ターミナルに NameError と行番号が出る）。
-# 答えは 配布コード/答え合わせ/backend/main.py（自分で埋めてから見る）。
+# main.py — Giftia 検索API
 #
 # 画面（Next.js）から呼ばれる「窓口」。条件を受け取り、班のDBを検索して、結果を JSON で返す。
 # 起動：uvicorn main:app --reload
@@ -46,15 +43,15 @@ def search(
     """条件に合う商品を、人気順（直近1年の販売数）で上位 limit 件返す"""
     # ① 条件を WHERE に1つずつ足す（値は %s で渡し、SQL の文字列に直接つなげない）
     where, params = ["stock > 0"], []  # 在庫切れは出さない
-    for word in ___:  # 【穴1】q を空白で区切って1語ずつにする（文字列のメソッド）
+    for word in q.split():  # q を空白で区切って1語ずつにする（文字列のメソッド）
         where.append("(product_name LIKE %s OR brand LIKE %s OR description LIKE %s)")
         params += [f"%{word}%"] * 3
     if category:
         where.append("category = %s")
-        params.append(___)  # 【穴2】%s に入れる値（受け取ったカテゴリー）
+        params.append(category)  # %s に入れる値（受け取ったカテゴリー）
     if indiv_wrap:
         where.append("description LIKE %s")  # 「個包装」は列がないので、説明文に書いてあるかで見る
-        params.append(___)  # 【穴3】「個包装」をどこかに含む、という LIKE のパターン
+        params.append("%個包装%")  # 「個包装」をどこかに含む、という LIKE のパターン
     if price_min is not None:
         where.append("price >= %s")
         params.append(price_min)
@@ -82,7 +79,7 @@ def to_gift(r: dict) -> dict:
         "id": r["product_id"],
         "category": r["category"],
         "brand": r["brand"],
-        "name": r[___],  # 【穴4】商品名の列名（データ定義.md の products を見る）
+        "name": r["product_name"],  # 商品名の列名（データ定義.md の products を見る）
         "price": r["price"],
         "rating": float(r["rating"]) if r["rating"] is not None else 0,  # レビューなしは 0
         "reviewCount": r["review_count"],
