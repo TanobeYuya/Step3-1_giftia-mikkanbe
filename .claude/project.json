@@ -99,7 +99,21 @@
       "**/evidence/**"
     ],
     "requireApprovalBeforeMerge": true,
-    "prePrReview": "code"
+    "prePrReview": "code",
+    "_comment_consensus": "consensusRules の paths を含む PR は、軽微な変更として扱わない（事前レビュー・自己承認・未承認マージの例外を外す）。approvers の全員（PR の作成者本人は除く）が Approve するまで、gh pr merge を止める（guard-bash）。approvers は GitHub のユーザー名",
+    "consensusRules": [
+      {
+        "paths": [
+          "docs/要求定義書/**",
+          "docs/要件定義書/**"
+        ],
+        "approvers": [
+          "akapuu14-bit",
+          "mikan23"
+        ],
+        "reason": "要求定義書・要件定義書は実装の根拠になるため、あかぷ・みかんの両方の合意が必要"
+      }
+    ]
   },
   "docs": {
     "_comment": "canonical は矛盾したときに上を優先する順。kickoff・spec-gate・spec-reviewer が読む。",

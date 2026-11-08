@@ -2,7 +2,7 @@
 // 規約の値は .claude/project.json の git / team / guards から読む。
 const fs = require('fs');
 const path = require('path');
-const { readInput, projectDir, loadConfig, deny, ask, selfMember, isLightChange, run } = require('./lib');
+const { readInput, projectDir, loadConfig, deny, ask, selfMember, isLightChange, consensusRules, run } = require('./lib');
 
 const input = readInput();
 const cmd = (input.tool_input && input.tool_input.command) || '';
@@ -122,16 +122,30 @@ if (prCreate && (git.prePrReview || 'code') !== 'off') {
 // 6) 未承認の PR のマージ・自分の PR の承認。軽微な変更（git.lightChangePaths だけ）は通し、それ以外は確認を求める
 function prInfo(args) {
   const num = (args.match(/(?:^|\s)#?(\d+)\b/) || [])[1];
-  const out = run('gh', ['pr', 'view', ...(num ? [num] : []), '--json', 'number,reviewDecision,author,files'], dir);
+  const out = run('gh', ['pr', 'view', ...(num ? [num] : []), '--json', 'number,reviewDecision,author,files,latestReviews'], dir);
   if (!out) return null;
   const pr = JSON.parse(out);
-  pr.light = isLightChange(cfg, (pr.files || []).map((f) => f.path));
+  pr.paths = (pr.files || []).map((f) => f.path);
+  pr.light = isLightChange(cfg, pr.paths);
   return pr;
 }
 const merge = cmd.match(/\bgh\s+pr\s+merge\b([^;&|\n]*)/);
 if (merge) {
   if (git.mergeMethod && !new RegExp(`--${git.mergeMethod}\\b`).test(merge[1])) {
     deny(`マージ方法は --${git.mergeMethod} を指定してください。`);
+  }
+  // 合意が必須のパス（git.consensusRules）を含む PR は、承認者の全員の Approve がそろうまでマージしない（作成者本人は除く）
+  if ((git.consensusRules || []).length) {
+    const pr = prInfo(merge[1]);
+    if (!pr) deny('PR の変更ファイルと承認者を gh pr view で確認できませんでした。合意が必須の文書を含むかもしれないため、マージを止めます。');
+    for (const rule of consensusRules(cfg, pr.paths)) {
+      const approved = new Set((pr.latestReviews || []).filter((r) => r.state === 'APPROVED').map((r) => r.author.login));
+      const missing = (rule.approvers || []).filter((a) => a !== pr.author.login && !approved.has(a));
+      if (missing.length) {
+        deny(`PR #${pr.number} は合意が必須の文書を含みます（${(rule.paths || []).join('、')}）。` +
+          `${rule.reason ? rule.reason + '。' : ''}まだ Approve していない承認者: ${missing.join('、')}。全員の Approve がそろってからマージしてください。`);
+      }
+    }
   }
   if (git.requireApprovalBeforeMerge !== false) {
     const pr = prInfo(merge[1]);
