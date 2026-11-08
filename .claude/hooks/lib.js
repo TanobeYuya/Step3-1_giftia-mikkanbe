@@ -53,9 +53,18 @@ function selfMember(cfg) {
   return ((cfg.team || {}).members || []).find((m) => m.self) || {};
 }
 
-// すべてのパスが軽微な変更（git.lightChangePaths）に当たるか
+// 変更したパスに当たる、合意が必須のルール（git.consensusRules）の一覧
+function consensusRules(cfg, paths) {
+  return ((cfg.git || {}).consensusRules || []).filter((rule) => {
+    const globs = (rule.paths || []).map(globToRegExp);
+    return paths.some((p) => globs.some((g) => g.test(p)));
+  });
+}
+
+// すべてのパスが軽微な変更（git.lightChangePaths）に当たるか。合意が必須のパスを含むときは軽微としない
 function isLightChange(cfg, paths) {
   const globs = ((cfg.git || {}).lightChangePaths || []).map(globToRegExp);
+  if (consensusRules(cfg, paths).length) return false;
   return paths.length > 0 && globs.length > 0 && paths.every((p) => globs.some((g) => g.test(p)));
 }
 
@@ -103,4 +112,4 @@ function relPath(dir, file) {
   return path.relative(dir, abs).split(path.sep).join('/');
 }
 
-module.exports = { readInput, projectDir, loadConfig, deny, ask, selfMember, isLightChange, run, globToRegExp, relPath };
+module.exports = { readInput, projectDir, loadConfig, deny, ask, selfMember, isLightChange, consensusRules, run, globToRegExp, relPath };

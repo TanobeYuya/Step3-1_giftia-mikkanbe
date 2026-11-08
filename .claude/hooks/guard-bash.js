@@ -2,7 +2,7 @@
 // 規約の値は .claude/project.json の git / team / guards から読む。
 const fs = require('fs');
 const path = require('path');
-const { readInput, projectDir, loadConfig, deny, ask, selfMember, isLightChange, run } = require('./lib');
+const { readInput, projectDir, loadConfig, deny, ask, selfMember, isLightChange, consensusRules, run } = require('./lib');
 
 const input = readInput();
 const cmd = (input.tool_input && input.tool_input.command) || '';
@@ -105,7 +105,8 @@ const prCreate = /\bgh\s+pr\s+create\b/.test(cmd);
 if (prCreate && (git.prePrReview || 'code') !== 'off') {
   const base = git.baseBranch || 'main';
   // core.quotePath=false: 日本語のファイル名を引用符つきのエスケープ表記にしない（lightChangePaths と照合できるようにする）
-  const files = (run('git', ['-c', 'core.quotePath=false', 'diff', '--name-only', `origin/${base}...HEAD`], dir) || '').split('\n').filter(Boolean);
+  // --no-renames: 移動したファイルを「削除＋追加」として出し、移動前の場所も判定に含める
+  const files = (run('git', ['-c', 'core.quotePath=false', 'diff', '--name-only', '--no-renames', `origin/${base}...HEAD`], dir) || '').split('\n').filter(Boolean);
   const skip = git.prePrReview !== 'all' && isLightChange(cfg, files);
   if (!skip) {
     const head = run('git', ['rev-parse', 'HEAD'], dir);
@@ -120,18 +121,84 @@ if (prCreate && (git.prePrReview || 'code') !== 'off') {
 }
 
 // 6) 未承認の PR のマージ・自分の PR の承認。軽微な変更（git.lightChangePaths だけ）は通し、それ以外は確認を求める
+// gh pr merge / review の引数から、PR の指定（番号・URL・ブランチ名）と -R/--repo を取り出し、そのまま gh pr view に渡す
+// （番号だけを拾うと、URL やブランチ名で指定したときに、別の PR（今のブランチの PR）を調べてしまうため）
+const VALUE_FLAGS = new Set(['-t', '--subject', '-b', '--body', '-F', '--body-file', '-A', '--author-email', '--match-head-commit']);
+function prSelector(args) {
+  const toks = args.match(/"[^"]*"|'[^']*'|\S+/g) || [];
+  const sel = [];
+  const repo = [];
+  for (let i = 0; i < toks.length; i++) {
+    const t = toks[i];
+    const unq = (s) => (s || '').replace(/^["']|["']$/g, '');
+    if (t === '-R' || t === '--repo') { repo.push('-R', unq(toks[++i])); continue; }
+    if (t.startsWith('--repo=')) { repo.push('-R', unq(t.slice(7))); continue; }
+    if (/^-R./.test(t)) { repo.push('-R', unq(t.slice(2))); continue; } // -Rowner/repo（値をくっつけた形）
+    if (VALUE_FLAGS.has(t)) { i++; continue; }
+    if (t.startsWith('-')) continue;
+    sel.push(t.replace(/^["']|["']$/g, '').replace(/^#/, ''));
+  }
+  return [...sel.slice(0, 1), ...repo];
+}
 function prInfo(args) {
-  const num = (args.match(/(?:^|\s)#?(\d+)\b/) || [])[1];
-  const out = run('gh', ['pr', 'view', ...(num ? [num] : []), '--json', 'number,reviewDecision,author,files'], dir);
+  const out = run('gh', ['pr', 'view', ...prSelector(args), '--json',
+    'number,url,headRefOid,changedFiles,reviewDecision,author,files,latestReviews'], dir);
   if (!out) return null;
   const pr = JSON.parse(out);
-  pr.light = isLightChange(cfg, (pr.files || []).map((f) => f.path));
+  pr.paths = (pr.files || []).map((f) => f.path);
+  // gh pr view の files は途中で切れることがあり、移動前の名前も入らない。API から全ページと移動前の名前（previous_filename）を取る
+  const m = (pr.url || '').match(/github\.com\/([^/]+\/[^/]+)\/pull\/(\d+)/);
+  const api = m && run('gh', ['api', '--paginate', `repos/${m[1]}/pulls/${m[2]}/files`,
+    '--jq', '.[] | .filename, (.previous_filename // empty)'], dir);
+  pr.fullPaths = api ? api.split('\n').filter(Boolean) : null;
+  // レビュー：gh pr view の latestReviews はコミットが空で返るため、REST API から commit_id 付きで取る（古い順）。
+  // 人ごとに最後の判断（コメントだけのレビューは除く）を残す
+  const rv = m && run('gh', ['api', '--paginate', `repos/${m[1]}/pulls/${m[2]}/reviews`,
+    '--jq', '.[] | [.user.login, .state, .commit_id] | @tsv'], dir);
+  pr.decisions = rv === null || rv === undefined || !m ? null : {};
+  for (const line of (rv || '').split('\n').filter(Boolean)) {
+    const [login, state, commit] = line.split('\t');
+    if (state !== 'COMMENTED') pr.decisions[login] = { state, commit };
+  }
+  if (pr.fullPaths) pr.paths = [...new Set([...pr.paths, ...pr.fullPaths])];
+  // 一覧が全部そろったと言えないときは、軽微な変更として扱わない
+  const complete = !!pr.fullPaths || (pr.changedFiles || 0) <= (pr.files || []).length;
+  pr.light = complete && isLightChange(cfg, pr.paths);
   return pr;
 }
 const merge = cmd.match(/\bgh\s+pr\s+merge\b([^;&|\n]*)/);
 if (merge) {
   if (git.mergeMethod && !new RegExp(`--${git.mergeMethod}\\b`).test(merge[1])) {
     deny(`マージ方法は --${git.mergeMethod} を指定してください。`);
+  }
+  // 合意が必須のパス（git.consensusRules）を含む PR は、承認者の全員の Approve がそろうまでマージしない（作成者本人は除く）
+  if ((git.consensusRules || []).length) {
+    // 判定で調べる PR とマージの対象を必ず一致させるため、マージは「番号＋決まったオプション」だけの単独のコマンドに限る。
+    // URL・ブランチ名・-R・環境変数（GH_REPO など）・ほかのコマンドとのつなぎは、シェルの解釈とずれる余地があるので止める
+    const simple = cmd.trim().match(/^gh\s+pr\s+merge\s+#?(\d+)((?:\s+(?:--squash|--merge|--rebase|--delete-branch|-d|--admin|--auto))*)\s*$/);
+    if (!simple || /GH_[A-Z_]*/.test(cmd)) {
+      deny('合意が必須の文書を含むかを正しく判定するため、マージは「gh pr merge <番号> --squash」の形で、ほかのコマンドとつなげずに実行してください' +
+        '（使えるオプション：--squash・--merge・--rebase・--delete-branch・-d・--admin・--auto。URL・ブランチ名・-R・環境変数は使わない）。');
+    }
+    const pr = prInfo(simple[1]);
+    if (!pr) deny('PR の変更ファイルと承認者を gh pr view で確認できませんでした。合意が必須の文書を含むかもしれないため、マージを止めます。');
+    if (!pr.fullPaths) {
+      deny(`PR #${pr.number} の変更ファイルの全一覧（移動前の名前を含む）を GitHub の API で取れませんでした。合意が必須の文書を含むかもしれないため、マージを止めます。`);
+    }
+    for (const rule of consensusRules(cfg, pr.paths)) {
+      if (!pr.decisions) {
+        deny(`PR #${pr.number} のレビューを GitHub の API で取れませんでした。合意が必須の文書を含むため、マージを止めます。`);
+      }
+      // 今の最新コミットに対する Approve だけを数える（Approve のあとに書き換えたら、もう一度 Approve が要る）
+      const approved = new Set(Object.entries(pr.decisions)
+        .filter(([, d]) => d.state === 'APPROVED' && d.commit === pr.headRefOid)
+        .map(([login]) => login));
+      const missing = (rule.approvers || []).filter((a) => a !== pr.author.login && !approved.has(a));
+      if (missing.length) {
+        deny(`PR #${pr.number} は合意が必須の文書を含みます（${(rule.paths || []).join('、')}）。` +
+          `${rule.reason ? rule.reason + '。' : ''}最新のコミットに Approve していない承認者: ${missing.join('、')}。全員の Approve がそろってからマージしてください。`);
+      }
+    }
   }
   if (git.requireApprovalBeforeMerge !== false) {
     const pr = prInfo(merge[1]);
