@@ -175,10 +175,20 @@ if (merge) {
   if ((git.consensusRules || []).length) {
     // 判定で調べる PR とマージの対象を必ず一致させるため、マージは「番号＋決まったオプション」だけの単独のコマンドに限る。
     // URL・ブランチ名・-R・環境変数（GH_REPO など）・ほかのコマンドとのつなぎは、シェルの解釈とずれる余地があるので止める
-    const simple = cmd.trim().match(/^gh\s+pr\s+merge\s+#?(\d+)((?:\s+(?:--squash|--merge|--rebase|--delete-branch|-d|--admin|--auto))*)\s*$/);
+    // 区切りは空白とタブだけ（改行を区切りに使わせない）。# ; & | $ ` \ と改行を含むものも止める。
+    // --auto は、判定のあとに別のコミットがマージされうるので認めない
+    const simple = /[#;&|$`\\\n\r]/.test(cmd) ? null
+      : cmd.trim().match(/^gh[ \t]+pr[ \t]+merge[ \t]+(\d+)((?:[ \t]+(?:--squash|--merge|--rebase|--delete-branch|-d|--admin))*)[ \t]*$/);
     if (!simple || /GH_[A-Z_]*/.test(cmd)) {
       deny('合意が必須の文書を含むかを正しく判定するため、マージは「gh pr merge <番号> --squash」の形で、ほかのコマンドとつなげずに実行してください' +
-        '（使えるオプション：--squash・--merge・--rebase・--delete-branch・-d・--admin・--auto。URL・ブランチ名・-R・環境変数は使わない）。');
+        '（使えるオプション：--squash・--merge・--rebase・--delete-branch・-d・--admin。URL・ブランチ名・-R・環境変数・--auto は使わない）。');
+    }
+    // コマンドを実行するフォルダのリポジトリが、判定で調べるリポジトリ（プロジェクト）と違えば止める
+    if (input.cwd) {
+      const top = (d) => (run('git', ['rev-parse', '--show-toplevel'], d) || '').replace(/\\/g, '/').toLowerCase();
+      if (top(input.cwd) !== top(dir)) {
+        deny('コマンドを実行するフォルダのリポジトリが、プロジェクトのリポジトリと違うため、合意が必須の文書の判定ができません。プロジェクトのフォルダでマージしてください。');
+      }
     }
     const pr = prInfo(simple[1]);
     if (!pr) deny('PR の変更ファイルと承認者を gh pr view で確認できませんでした。合意が必須の文書を含むかもしれないため、マージを止めます。');
