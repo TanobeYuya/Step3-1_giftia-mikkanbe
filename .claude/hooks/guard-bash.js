@@ -173,11 +173,14 @@ if (merge) {
   }
   // 合意が必須のパス（git.consensusRules）を含む PR は、承認者の全員の Approve がそろうまでマージしない（作成者本人は除く）
   if ((git.consensusRules || []).length) {
-    // 環境変数でリポジトリを切り替えると、判定で調べる PR とマージの対象がずれるため止める
-    if (/\bGH_(REPO|HOST)\s*=/.test(cmd)) {
-      deny('GH_REPO・GH_HOST でリポジトリを切り替えたマージは、合意が必須の文書の判定ができないため止めます。-R で指定してください。');
+    // 判定で調べる PR とマージの対象を必ず一致させるため、マージは「番号＋決まったオプション」だけの単独のコマンドに限る。
+    // URL・ブランチ名・-R・環境変数（GH_REPO など）・ほかのコマンドとのつなぎは、シェルの解釈とずれる余地があるので止める
+    const simple = cmd.trim().match(/^gh\s+pr\s+merge\s+#?(\d+)((?:\s+(?:--squash|--merge|--rebase|--delete-branch|-d|--admin|--auto))*)\s*$/);
+    if (!simple || /GH_[A-Z_]*/.test(cmd)) {
+      deny('合意が必須の文書を含むかを正しく判定するため、マージは「gh pr merge <番号> --squash」の形で、ほかのコマンドとつなげずに実行してください' +
+        '（使えるオプション：--squash・--merge・--rebase・--delete-branch・-d・--admin・--auto。URL・ブランチ名・-R・環境変数は使わない）。');
     }
-    const pr = prInfo(merge[1]);
+    const pr = prInfo(simple[1]);
     if (!pr) deny('PR の変更ファイルと承認者を gh pr view で確認できませんでした。合意が必須の文書を含むかもしれないため、マージを止めます。');
     if (!pr.fullPaths) {
       deny(`PR #${pr.number} の変更ファイルの全一覧（移動前の名前を含む）を GitHub の API で取れませんでした。合意が必須の文書を含むかもしれないため、マージを止めます。`);
