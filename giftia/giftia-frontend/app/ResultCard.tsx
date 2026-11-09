@@ -8,6 +8,15 @@ export default function ResultCard({ gift, rank }: { gift: Gift; rank: number })
       <h3 className="name">{gift.name}</h3>
       <p className="price">{gift.price.toLocaleString()}円</p>
       <p className="meta">評価{gift.rating}（{gift.reviewCount}件）</p>
+      {gift.tags.length > 0 && (
+        <ul className="tags">
+          {gift.tags.map((t) => (
+            <li key={`${t.kind}-${t.name}`} className={`tag tag-${t.kind}`}>
+              {t.kind === "recipient" && t.count ? `${t.name} ${t.count}件` : t.name}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
