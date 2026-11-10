@@ -5,12 +5,15 @@
 import { useState } from "react";
 import ResultCard from "./ResultCard";
 import { searchGifts, type Gift } from "@/lib/api";
+import { RECIPIENT_OPTIONS, SCENE_OPTIONS } from "@/lib/options";
 
 export default function Home() {
   // ① 状態（変化するデータ）を覚える箱
   const [mode, setMode] = useState<"standard" | "business">("standard"); // どのタブか
   const [keyword, setKeyword] = useState("");                             // 入力した言葉
   const [category, setCategory] = useState("");                           // 選んだカテゴリー
+  const [recipient, setRecipient] = useState("");                         // 選んだ贈る相手
+  const [scene, setScene] = useState("");                                 // 選んだシーン
   const [indivWrap, setIndivWrap] = useState(false); // 個包装だけ（取引先へのお礼）
   const [priceBand, setPriceBand] = useState("");                         // 価格帯（取引先へのお礼）
   const [results, setResults] = useState<Gift[] | null>(null);            // 検索結果
@@ -22,8 +25,8 @@ export default function Home() {
     setError("");
     // いま開いているタブの条件だけを送る（もう一方のタブの入力は送らない）
     const condition = mode === "standard"
-      ? { keyword, category, indivWrap: false, priceBand: "" }
-      : { keyword: "", category: "", indivWrap, priceBand };
+      ? { keyword, category, indivWrap: false, priceBand: "", recipient, scene }
+      : { keyword: "", category: "", indivWrap, priceBand, recipient: "", scene: "" };
     try {
       setResults(await searchGifts(condition));
     } catch (err) {
@@ -53,6 +56,19 @@ export default function Home() {
               <option value="食品">食品</option>
               <option value="生活雑貨">生活雑貨</option>
             </select>
+            <label className="field">
+              <span className="field-label">誰に贈る？</span>
+              <select value={recipient} onChange={(e) => setRecipient(e.target.value)}>
+                {RECIPIENT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </label>
+            <label className="field">
+              <span className="field-label">どんな場面？</span>
+              <select value={scene} onChange={(e) => setScene(e.target.value)}>
+                <option value="">指定なし</option>
+                {SCENE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </label>
           </>
         ) : (
           <>
