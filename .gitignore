@@ -20,3 +20,6 @@ local.settings.json
 *.pfx
 .azure/
 _site/
+
+# Python のキャッシュ
+__pycache__/
