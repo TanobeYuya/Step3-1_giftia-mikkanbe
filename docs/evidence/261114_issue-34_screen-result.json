@@ -1,0 +1,94 @@
+{
+ "none": {
+  "sent": [
+   "?"
+  ],
+  "cards": 20,
+  "violations": [],
+  "osusume": false,
+  "first_tags": [
+   "母 3件",
+   "誕生日",
+   "送別",
+   "お礼"
+  ]
+ },
+ "TC-01": {
+  "sent": [
+   "?recipient=mother"
+  ],
+  "cards": 20,
+  "violations": [],
+  "osusume": false,
+  "first_tags": [
+   "母 12件",
+   "誕生日",
+   "送別",
+   "母の日"
+  ]
+ },
+ "TC-02": {
+  "sent": [
+   "?recipient=mother&scene=誕生日"
+  ],
+  "cards": 20,
+  "violations": [],
+  "osusume": false,
+  "first_tags": [
+   "母 12件",
+   "誕生日",
+   "送別",
+   "母の日"
+  ]
+ },
+ "TC-03": {
+  "sent": [
+   "?recipient=mother&scene=母の日"
+  ],
+  "cards": 20,
+  "violations": [],
+  "osusume": false,
+  "first_tags": [
+   "母 12件",
+   "母の日",
+   "誕生日",
+   "送別"
+  ]
+ },
+ "TC-05": {
+  "sent": [
+   "?recipient=mother&scene=出産祝い"
+  ],
+  "cards": 20,
+  "violations": [],
+  "osusume": false,
+  "first_tags": [
+   "母 2件",
+   "出産祝い",
+   "誕生日",
+   "お礼"
+  ]
+ },
+ "TC-06": {
+  "sent": [
+   "?q=タオル&recipient=mother"
+  ],
+  "cards": 20,
+  "violations": [],
+  "osusume": false,
+  "first_tags": [
+   "母 5件",
+   "誕生日",
+   "送別",
+   "お礼"
+  ]
+ },
+ "TC-12": {
+  "sent": "indiv_wrap=true&price_min=3000&price_max=4999",
+  "cards": 20,
+  "same_names_and_order_as_old_api": true,
+  "all_tagged": true,
+  "violations": [],
+  "osusume": false
+ }
+}
