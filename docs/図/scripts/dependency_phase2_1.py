@@ -55,10 +55,10 @@ d.node(COL[0], R2(Y_PM), W, H, "Q1（#58）辞書を DB に入れる：完了",
        "人が確かめた辞書（139文）を DB に入れた<br>依存関係：B1（完了）", tier="db", muted=True)
 d.node(COL[1], R1(Y_PM), W, H, "★ #67 設計書：検索を速くする",
        "DS-06 段階③④と TC-32 を足す<br>Approve：あかぷさんかみかんさん<br>依存関係：なし", tier="db", highlight=True)
-d.node(COL[1], R2(Y_PM), W, H, "★ F-1 個包装の定義を直す",
-       "Issue と、要件定義書・TC-12 の PR<br>Approve：あかぷさん・みかんさん<br>依存関係：なし", tier="db", highlight=True)
+d.node(COL[1], R2(Y_PM), W, H, "★ P1（#68）個包装の定義を直す",
+       "要件定義書・TC-12・付録A を直す PR<br>Approve：あかぷさん・みかんさん<br>依存関係：なし", tier="db", highlight=True)
 d.node(COL[4], R1(Y_PM), W, H, "★ Q2（#42）通しの確認",
-       "TC-15〜TC-32 を確かめ、試用の2回目<br>TC-12 の画面はみかんさんが撮り直す<br>依存関係：B2・B3・F2・F-1 の実装", tier="db", highlight=True)
+       "TC-15〜TC-32 を確かめ、試用の2回目<br>TC-12 の画面はみかんさんが撮り直す<br>依存関係：B2・B3・F2・B4", tier="db", highlight=True)
 
 # あかぷさん
 d.node(COL[0], R1(Y_BE), W, H, "B1（#56）文に分ける道具：完了",
@@ -67,8 +67,8 @@ d.node(COL[2], R1(Y_BE), W, H, "★ B2（#57）検索を速くする",
        "DS-06 段階①〜④（往復を減らす）<br>マージ後に Azure で測る。1秒超なら<br>インデックスを見直す<br>依存関係：#67", tier="api", highlight=True)
 d.node(COL[3], R1(Y_BE), W, H, "★ B3（#59）詳細とレビューの API",
        "モーダルに渡すデータを返す<br>依存関係：Q1（完了）・B2", tier="api", highlight=True)
-d.node(COL[2], R2(Y_BE), W, H, "★ F-1 個包装の絞り込みを直す",
-       "main.py の LIKE を product_facts に<br>変える（Issue は起票前）<br>依存関係：F-1 の文書の PR", tier="api", highlight=True)
+d.node(COL[2], R2(Y_BE), W, H, "★ B4（#69）個包装の絞り込みを直す",
+       "main.py の LIKE を product_facts に<br>変える<br>依存関係：#68・B2", tier="api", highlight=True)
 
 # みかんさん
 d.node(COL[2], R1(Y_FE), W, H, "F1（#60）レビューのモーダル",
@@ -91,6 +91,10 @@ def label_right(x, y, t, w=130):
     d.text(x + 8, y, w, 20, t, align="left", **LBL)
 
 
+# B2 → B4（同じ search() を触るため、B2 を先にマージする）
+bx = COL[2] + W / 2
+d.edge([(bx, R1(Y_BE) + H), (bx, R2(Y_BE))], "req")
+d.text(bx + 10, R1(Y_BE) + H + 10, 140, 20, "同じ search()", align="left", **LBL)
 # B1 → Q1（完了）
 d.edge([(190, R1(Y_BE)), (190, R2(Y_PM) + H)], "req")
 label_right(190, GAP1, "辞書の案（CSV）")
