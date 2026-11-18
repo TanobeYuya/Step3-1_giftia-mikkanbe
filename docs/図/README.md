@@ -11,7 +11,9 @@
 | [構成図.drawio](drawio/構成図.drawio) | 1_構成図 | 画面の部品・API の処理・DB のテーブルのつながり（Azure のアイコン入り） | 7.1 |
 | [構成図.drawio](drawio/構成図.drawio) | 2_シーケンス図_検索 | 贈る相手とシーンを選んで検索したときの、画面・API・DB の動き | 7.2 |
 | [構成図.drawio](drawio/構成図.drawio) | 3_シーケンス図_データ作成 | review_to_mother の行を作る手順（開発が月1回） | 7.2 |
-| [依存関係図.drawio](drawio/依存関係図.drawio) | 1_Phase2-1 | Phase2 ① の課題（Q0〜F2、Q2）の依存関係と日程の目安 | 仕様設計書 10.7 |
+| [依存関係図.drawio](drawio/依存関係図.drawio) | 1_Phase2-1 | Phase2 ① の課題（Q0〜F2、Q2）に、#67（検索を速くする設計）と F-1（個包装の食い違い）を足した依存関係と日程の目安（2026-11-17 時点）。完了した課題は灰色の破線 | 仕様設計書 10.7 |
+
+依存関係図は、[scripts/dependency_phase2_1.py](scripts/dependency_phase2_1.py) で作っている（drawio-diagram スキルの drawio_kit を使う）。直すときはスクリプトを直し、`python -I "docs/図/scripts/dependency_phase2_1.py"` で .drawio と PNG を作り直す。
 
 図の決まり
 
