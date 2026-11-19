@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-from database import fetch_all
+from database import connection, fetch_all
 
 load_dotenv()  # .env を読む（DB の接続情報・CORS の許可）
 
@@ -44,7 +44,7 @@ def health():
 
 @app.get("/api/search")
 def search(
-    q: str = Query(default="", description="キーワード（空白区切りで複数。すべてを含む商品）"),
+    q: str = Query(default="", max_length=100, description="キーワード（空白区切りで複数。すべてを含む商品。100文字まで）"),
     category: str = Query(default="", description="カテゴリー（空ならすべて）"),
     indiv_wrap: bool = Query(default=False, description="true なら、説明文に「個包装」とある商品だけ"),
     price_min: int | None = Query(default=None, ge=0, description="価格の下限（以上）"),
@@ -81,31 +81,35 @@ def search(
         params.append(scene)
     condition = " AND ".join(where)
 
-    # ② 件数と、上位 limit 件を取る
-    total = fetch_all(f"SELECT COUNT(*) AS n FROM products AS p WHERE {condition}", tuple(params))[0]["n"]
-    if recipient:
-        # 贈る相手を選んだとき：その相手のレビュー件数が多い順 → 販売数 → 商品ID。件数がない商品は 0 件（SP-05）
-        rows = fetch_all(
-            f"""SELECT p.product_id, p.category, p.brand, p.product_name, p.price, p.rating, p.review_count
-                FROM products AS p
-                LEFT JOIN product_facts AS f ON f.product_id = p.product_id AND f.fact = %s
-                WHERE {condition}
-                ORDER BY COALESCE(f.value, 0) DESC, p.sales_count DESC, p.product_id
-                LIMIT %s""",
-            (RECIPIENTS[recipient]["fact"], *params, limit),
-        )
-    else:
-        # 選ばないとき：いままでと同じ並び順（SP-08）
-        rows = fetch_all(
-            f"""SELECT p.product_id, p.category, p.brand, p.product_name, p.price, p.rating, p.review_count
-                FROM products AS p WHERE {condition}
-                ORDER BY p.sales_count DESC, p.product_id
-                LIMIT %s""",
-            (*params, limit),
-        )
+    # 1回の検索で、DB への接続は1つだけ使う（DS-06 段階①）
+    with connection() as conn:
+        # ② 件数と、上位 limit 件を取る
+        total = fetch_all(f"SELECT COUNT(*) AS n FROM products AS p WHERE {condition}", tuple(params), conn)[0]["n"]
+        if recipient:
+            # 贈る相手を選んだとき：その相手のレビュー件数が多い順 → 販売数 → 商品ID。件数がない商品は 0 件（SP-05）
+            rows = fetch_all(
+                f"""SELECT p.product_id, p.category, p.brand, p.product_name, p.price, p.rating, p.review_count
+                    FROM products AS p
+                    LEFT JOIN product_facts AS f ON f.product_id = p.product_id AND f.fact = %s
+                    WHERE {condition}
+                    ORDER BY COALESCE(f.value, 0) DESC, p.sales_count DESC, p.product_id
+                    LIMIT %s""",
+                (RECIPIENTS[recipient]["fact"], *params, limit),
+                conn,
+            )
+        else:
+            # 選ばないとき：いままでと同じ並び順（SP-08）
+            rows = fetch_all(
+                f"""SELECT p.product_id, p.category, p.brand, p.product_name, p.price, p.rating, p.review_count
+                    FROM products AS p WHERE {condition}
+                    ORDER BY p.sales_count DESC, p.product_id
+                    LIMIT %s""",
+                (*params, limit),
+                conn,
+            )
 
-    # ③ 商品のタグの材料（シーンと product_facts）を、商品ごとではなくまとめて2回で取る（N+1 を避ける）
-    scenes_by_product, facts_by_product = fetch_tag_sources([r["product_id"] for r in rows])
+        # ③ 商品のタグの材料（シーンと product_facts）を、商品ごとではなくまとめて2回で取る（N+1 を避ける）
+        scenes_by_product, facts_by_product = fetch_tag_sources([r["product_id"] for r in rows], conn)
 
     # ④ DB の行を、画面の Gift 型（1週目）に詰め替えて返す
     results = [
@@ -118,7 +122,7 @@ def search(
     return {"total": total, "results": results}
 
 
-def fetch_tag_sources(product_ids: list[str]) -> tuple[dict[str, list[str]], dict[str, dict[str, int]]]:
+def fetch_tag_sources(product_ids: list[str], conn) -> tuple[dict[str, list[str]], dict[str, dict[str, int]]]:
     """表示する商品のシーンと product_facts を取る。商品が0件なら DB を呼ばない（DS-02-4）"""
     if not product_ids:
         return {}, {}
@@ -126,12 +130,14 @@ def fetch_tag_sources(product_ids: list[str]) -> tuple[dict[str, list[str]], dic
     scene_rows = fetch_all(
         f"SELECT product_id, scene_tag FROM product_scenes WHERE product_id IN ({marks})",
         tuple(product_ids),
+        conn,
     )
     fact_names = ["room_temp", "indiv_wrap", "shelf_life_days", *[v["fact"] for v in RECIPIENTS.values()]]
     fact_marks = ", ".join(["%s"] * len(fact_names))
     fact_rows = fetch_all(
         f"SELECT product_id, fact, value FROM product_facts WHERE product_id IN ({marks}) AND fact IN ({fact_marks})",
         (*product_ids, *fact_names),
+        conn,
     )
     scenes_by_product: dict[str, list[str]] = {}
     for row in scene_rows:

@@ -9,15 +9,17 @@
 #   DB_SSL_CA   = 配布された SSL証明書のパス（任意。入れると Workbench の「Verify CA」と同じく相手を確かめる）
 
 import os
+from contextlib import contextmanager
 
 import pymysql
+from dbutils.pooled_db import PooledDB
 from dotenv import load_dotenv
 
 load_dotenv()  # 同じフォルダの .env を読み、os.environ に入れる
 
 
-def get_connection():
-    """班のDBへの接続を1つ作って返す。使い終わったら close() する（fetch_all が面倒を見る）"""
+def _connect_kwargs() -> dict:
+    """pymysql.connect に渡す接続の設定。get_connection とプールで同じ値を使う"""
     required = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"]
     missing = [k for k in required if not os.environ.get(k)]
     if missing:
@@ -26,7 +28,7 @@ def get_connection():
     # Azure は暗号化（SSL/TLS）しない接続を断る。証明書のパスがあれば、相手が Azure のサーバーかも確かめる
     ssl = {"ca": os.environ["DB_SSL_CA"]} if os.environ.get("DB_SSL_CA") else {"ssl_disabled": False}
 
-    return pymysql.connect(
+    return dict(
         host=os.environ["DB_HOST"],
         port=int(os.environ.get("DB_PORT", "3306")),
         user=os.environ["DB_USER"],
@@ -39,13 +41,38 @@ def get_connection():
     )
 
 
-def fetch_all(query: str, params: tuple = ()) -> list[dict]:
-    """SELECT を実行して、行を dict のリストで返す。
-    値は params で渡す（SQL の中の %s に入る）。文字列に直接つなげると、入力次第で DB を壊される。"""
-    conn = get_connection()
+def get_connection():
+    """班のDBへの接続を1つ作って返す（プールを使わない）。使い終わったら close() する"""
+    return pymysql.connect(**_connect_kwargs())
+
+
+# 接続プール（DS-06 段階②）。接続の確立に約1.3秒かかるため、作った接続を使い回す。最初に使うときに作る
+_pool = None
+
+
+def _get_pool():
+    global _pool
+    if _pool is None:
+        _pool = PooledDB(creator=pymysql, mincached=1, maxcached=4, **_connect_kwargs())
+    return _pool
+
+
+@contextmanager
+def connection():
+    """プールから接続を借りて、with の中で使い回す。抜けるとプールに返す（閉じない）"""
+    conn = _get_pool().connection()
     try:
-        with conn.cursor() as cur:
-            cur.execute(query, params)
-            return cur.fetchall()
+        yield conn
     finally:
-        conn.close()
+        conn.close()  # プールの接続では、close() は「返す」の意味になる
+
+
+def fetch_all(query: str, params: tuple = (), conn=None) -> list[dict]:
+    """SELECT を実行して、行を dict のリストで返す。conn を渡せばその接続で実行する。渡さなければ、1回だけの接続を作る。
+    値は params で渡す（SQL の中の %s に入る）。文字列に直接つなげると、入力次第で DB を壊される。"""
+    if conn is None:
+        with connection() as c:
+            return fetch_all(query, params, c)
+    with conn.cursor() as cur:
+        cur.execute(query, params)
+        return cur.fetchall()
