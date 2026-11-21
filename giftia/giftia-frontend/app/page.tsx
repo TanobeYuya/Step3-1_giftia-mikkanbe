@@ -2,9 +2,10 @@
 // 1週目との違い：①searchGifts が FastAPI を呼ぶ（async/await）②入力した条件を渡す ③つながらないときの表示
 "use client"; // ← ブラウザで動く合図。useState や onClick を使う画面に必要
 
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import ResultCard from "./ResultCard";
-import { searchGifts, type Gift } from "@/lib/api";
+import ProductModal from "./ProductModal";
+import { ApiError, searchGifts, type Gift } from "@/lib/api";
 import { RECIPIENT_OPTIONS, SCENE_OPTIONS } from "@/lib/options";
 
 export default function Home() {
@@ -18,20 +19,36 @@ export default function Home() {
   const [priceBand, setPriceBand] = useState("");                         // 価格帯（取引先へのお礼）
   const [results, setResults] = useState<Gift[] | null>(null);            // 検索結果
   const [error, setError] = useState("");                                 // つながらないときの文言
+  const [openId, setOpenId] = useState<string | null>(null);              // モーダルを開いている商品の ID（null なら閉じている）
+  // useCallback：同じ関数を使い回す（ProductModal の Esc キーの付け外しが、描き直しのたびに起きないようにする）
+  const closeModal = useCallback(() => setOpenId(null), []);
+  const [searching, setSearching] = useState(false);                         // 検索中か（SP-22）
+  const latest = useRef(0); // 最後に押した検索の番号。古い応答を捨てるために使う（SP-22）
 
   // ② 検索ボタンの処理（API に聞くので、結果が返るまで待つ＝async/await）
   async function onSearch(e: React.FormEvent) {
     e.preventDefault(); // ページの再読み込みを止める
+    const my = ++latest.current; // この検索の番号
     setError("");
     // いま開いているタブの条件だけを送る（もう一方のタブの入力は送らない）
     const condition = mode === "standard"
       ? { keyword, category, indivWrap: false, priceBand: "", recipient, scene }
       : { keyword: "", category: "", indivWrap, priceBand, recipient: "", scene: "" };
+    setSearching(true);
     try {
-      setResults(await searchGifts(condition));
+      const found = await searchGifts(condition);
+      if (my !== latest.current) return; // 後から押した検索があるので、この応答は捨てる
+      setResults(found);
     } catch (err) {
+      if (my !== latest.current) return;
       setResults(null);
-      setError(`APIにつながりません：${(err as Error).message}`); // 原因はブラウザの Console に出る
+      if (err instanceof ApiError && err.status === 422) {
+        setError("検索の条件を確かめてください（キーワードは100文字までです）。"); // SP-23：API が断ったとき
+      } else {
+        setError(`APIにつながりません：${(err as Error).message}`); // 原因はブラウザの Console に出る
+      }
+    } finally {
+      if (my === latest.current) setSearching(false); // 自分が最後の検索のときだけ戻す
     }
   }
 
@@ -49,7 +66,7 @@ export default function Home() {
       <form className="form" onSubmit={onSearch}>
         {mode === "standard" ? (
           <>
-            <input className="q" value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="キーワード（例：送別 お菓子）" />
+            <input className="q" maxLength={100} value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="キーワード（例：送別 お菓子）" />
             <select value={category} onChange={(e) => setCategory(e.target.value)}>
               <option value="">すべてのカテゴリー</option>
               <option value="コスメ">コスメ</option>
@@ -80,7 +97,7 @@ export default function Home() {
             </select>
           </>
         )}
-        <button type="submit">検索</button>
+        <button type="submit" disabled={searching}>{searching ? "検索中…" : "検索"}</button>
       </form>
 
       {error && <p className="summary">{error}</p>}
@@ -90,10 +107,13 @@ export default function Home() {
         <section>
           <p className="summary">上位 {results.length} 件</p>
           <div className="grid">
-            {results.map((g, i) => <ResultCard key={g.id} gift={g} rank={i + 1} />)}
+            {results.map((g, i) => <ResultCard key={g.id} gift={g} rank={i + 1} onOpen={setOpenId} />)}
           </div>
         </section>
       )}
+
+      {/* openId があるときだけモーダルを出す。閉じると null に戻り、検索結果（results）はそのまま残る */}
+      {openId && <ProductModal productId={openId} onClose={closeModal} />}
     </main>
   );
 }

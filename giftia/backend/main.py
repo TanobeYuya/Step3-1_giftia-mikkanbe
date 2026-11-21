@@ -8,10 +8,11 @@ import os
 from typing import Literal
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, HTTPException, Path, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import connection, fetch_all
+from review_text import split_pieces
 
 load_dotenv()  # .env を読む（DB の接続情報・CORS の許可）
 
@@ -120,6 +121,87 @@ def search(
         for r in rows
     ]
     return {"total": total, "results": results}
+
+
+MODAL_REVIEW_LIMIT = 30  # モーダルに出すレビューの最大件数（10.1 論点1）
+# SP-09 の「母に贈った」と同じ条件。変えるときは DS-01 の SQL と一緒に変える（TC-25 で一致を確かめる）
+MOTHER_SQL = (
+    "(r.comment LIKE '%%母%%' AND r.comment NOT LIKE '%%祖母%%'"
+    " AND r.comment NOT LIKE '%%叔母%%' AND r.comment NOT LIKE '%%伯母%%')"
+)
+
+
+@app.get("/api/products/{product_id}")
+def product_detail(product_id: str = Path(pattern=r"^G[0-9]{4}$")):  # 形が違えば FastAPI が 422 を返す（SP-18）。\d は全角の数字にも当たるため [0-9] と書く
+    """商品の詳細と、本文のあるレビュー（最大30件。母に贈ったレビューを先頭）を返す（DS-05）"""
+    with connection() as conn:
+        # ① 商品。なければ 404（DB の中身やエラーの詳細は返さない）
+        products = fetch_all(
+            "SELECT product_id, product_name, price, description FROM products WHERE product_id = %s",
+            (product_id,),
+            conn,
+        )
+        if not products:
+            raise HTTPException(status_code=404, detail="商品がありません")
+        product = products[0]
+
+        # ② レビュー。total は LIMIT の前に数えた、本文のあるレビューの全件数
+        review_rows = fetch_all(
+            f"""SELECT r.review_id, r.rating, r.comment, {MOTHER_SQL} AS to_mother, COUNT(*) OVER () AS total
+                FROM reviews AS r
+                WHERE r.product_id = %s AND r.comment IS NOT NULL AND TRIM(r.comment) <> ''
+                ORDER BY to_mother DESC, r.posted_at DESC, r.review_id
+                LIMIT %s""",
+            (product_id, MODAL_REVIEW_LIMIT),
+            conn,
+        )
+
+        # ③ 文の辞書。キーをまとめて1回で引く（レビューごとには引かない）。キーが0個なら流さない
+        keys = sorted({key for row in review_rows for _, key in split_pieces(row["comment"]) if key})
+        labels: dict[str, dict] = {}
+        if keys:
+            marks = ", ".join(["%s"] * len(keys))
+            label_rows = fetch_all(
+                f"SELECT sentence, polarity, use_scene FROM review_sentences WHERE sentence IN ({marks})",
+                tuple(keys),
+                conn,
+            )
+            labels = {row["sentence"]: row for row in label_rows}
+
+    return {
+        "id": product["product_id"],
+        "name": product["product_name"],
+        "price": product["price"],
+        "description": product["description"],
+        "reviewTotal": review_rows[0]["total"] if review_rows else 0,
+        "reviews": [build_review(row, labels) for row in review_rows],
+    }
+
+
+def build_review(row: dict, labels: dict[str, dict]) -> dict:
+    """レビュー1件を、文ごとのハイライトとセンチメントつきの形に組み立てる。DB は呼ばない（DS-05）"""
+    segments = []
+    has_positive = has_negative = False
+    for text, key in split_pieces(row["comment"]):
+        label = labels.get(key, {"polarity": "none", "use_scene": 0})
+        segments.append({"text": text, "mark": label["use_scene"] == 1})
+        has_positive = has_positive or label["polarity"] == "positive"
+        has_negative = has_negative or label["polarity"] == "negative"
+    if has_positive and has_negative:
+        sentiment = "mixed"
+    elif has_positive:
+        sentiment = "positive"
+    elif has_negative:
+        sentiment = "negative"
+    else:
+        sentiment = "neutral"
+    return {
+        "id": row["review_id"],
+        "rating": row["rating"],
+        "toMother": bool(row["to_mother"]),
+        "sentiment": sentiment,
+        "segments": segments,
+    }
 
 
 def fetch_tag_sources(product_ids: list[str], conn) -> tuple[dict[str, list[str]], dict[str, dict[str, int]]]:
