@@ -25,8 +25,40 @@ export type SearchCondition = {
   scene: string;      // いまの検索：シーン（空なら指定なし）
 };
 
+// モーダルに出すレビュー（DS-05 の応答の形）。本文は文のかたまり（segments）に分かれて届く
+export type Segment = { text: string; mark: boolean }; // mark が true の文を、使う場面としてハイライトする
+export type Review = {
+  id: string;
+  rating: number;
+  toMother: boolean; // 「母に贈った」レビューか（SP-09）
+  sentiment: "positive" | "negative" | "mixed" | "neutral";
+  segments: Segment[];
+};
+export type ProductDetail = {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+  reviewTotal: number; // 本文のあるレビューの件数（全部）
+  reviews: Review[];   // 実際に届いたレビュー（最大30件）
+};
+
+// API が断ったときのエラー。status（HTTP の状態コード）を見て、画面が文言を出し分ける（10.1 論点10）
+export class ApiError extends Error {
+  constructor(public status: number) {
+    super(`HTTP ${status}`);
+  }
+}
+
 // API の場所。NEXT_PUBLIC_ の値はブラウザに配られる＝秘密は置かない（.env.local に書く）
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+// 商品の詳細とレビューを取る（モーダルを開いたときに1回だけ呼ぶ）。signal で通信を途中で止められる
+export async function fetchProduct(id: string, signal?: AbortSignal): Promise<ProductDetail> {
+  const res = await fetch(`${API}/api/products/${encodeURIComponent(id)}`, { signal });
+  if (!res.ok) throw new ApiError(res.status);
+  return res.json();
+}
 
 // 入力した条件をサーバー（FastAPI）に送り、結果（Gift の配列）をもらう
 export async function searchGifts(c: SearchCondition): Promise<Gift[]> {
@@ -42,7 +74,7 @@ export async function searchGifts(c: SearchCondition): Promise<Gift[]> {
 
   // ② fetch で API を呼ぶ（通信が終わるまで待つ＝await）
   const res = await fetch(`${API}/api/search?${params.toString()}`);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) throw new ApiError(res.status);
 
   // ③ 返ってきた JSON を読む。{ total, results } の results が Gift の配列
   const data = await res.json();
