@@ -1,0 +1,11 @@
+# 更新後（next 16.4.5、next start）の HTTP 確認 2026-11-21 16:59
+GET / -> 200
+GET /about -> 200
+GET /_next/static/chunks/0kqziy-7_gy73.js -> 200
+GET /_next/static/chunks/395glp5--7qza.js -> 200
+GET /_next/static/chunks/3jn_x8ihwq16e.js -> 200
+GET /_next/static/chunks/turbopack-2u1d16houkiyo.js -> 200
+GET /_next/static/chunks/3qfy96eoyh-ek.js -> 200
+GET /api/search?recipient=mother&scene=%E8%AA%95%E7%94%9F%E6%97%A5 -> 200  total=4503
+GET /api/products/G3759 -> 200
+GET /api/products/G9999 -> 404
