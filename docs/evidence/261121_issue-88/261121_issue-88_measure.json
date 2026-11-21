@@ -1,0 +1,121 @@
+{
+ "form-wide": {
+  "width": 1200,
+  "rows": [
+   {
+    "el": "input.q",
+    "text": "キーワード（例：送別 お",
+    "top": 141,
+    "bottom": 176,
+    "left": 136,
+    "width": 367
+   },
+   {
+    "el": "select",
+    "text": "すべてのカテゴリーコスメ",
+    "top": 139,
+    "bottom": 176,
+    "left": 511,
+    "width": 177
+   },
+   {
+    "el": "select",
+    "text": "指定なし母（義母を含む）",
+    "top": 139,
+    "bottom": 176,
+    "left": 696,
+    "width": 162
+   },
+   {
+    "el": "select",
+    "text": "指定なし誕生日送別お礼母",
+    "top": 139,
+    "bottom": 176,
+    "left": 866,
+    "width": 102
+   },
+   {
+    "el": "button",
+    "text": "検索",
+    "top": 139,
+    "bottom": 176,
+    "left": 976,
+    "width": 88
+   }
+  ]
+ },
+ "form-narrow": {
+  "width": 600,
+  "rows": [
+   {
+    "el": "input.q",
+    "text": "キーワード（例：送別 お",
+    "top": 117,
+    "bottom": 152,
+    "left": 16,
+    "width": 568
+   },
+   {
+    "el": "select",
+    "text": "すべてのカテゴリーコスメ",
+    "top": 182,
+    "bottom": 219,
+    "left": 16,
+    "width": 177
+   },
+   {
+    "el": "select",
+    "text": "指定なし母（義母を含む）",
+    "top": 182,
+    "bottom": 219,
+    "left": 201,
+    "width": 162
+   },
+   {
+    "el": "select",
+    "text": "指定なし誕生日送別お礼母",
+    "top": 182,
+    "bottom": 219,
+    "left": 371,
+    "width": 102
+   },
+   {
+    "el": "button",
+    "text": "検索",
+    "top": 182,
+    "bottom": 219,
+    "left": 481,
+    "width": 88
+   }
+  ]
+ },
+ "business-tab": {
+  "width": 1200,
+  "rows": [
+   {
+    "el": "label.chk",
+    "text": "個包装",
+    "top": 125,
+    "bottom": 147,
+    "left": 136,
+    "width": 66
+   },
+   {
+    "el": "select",
+    "text": "すべての価格帯3,000",
+    "top": 117,
+    "bottom": 154,
+    "left": 210,
+    "width": 156
+   },
+   {
+    "el": "button",
+    "text": "検索",
+    "top": 117,
+    "bottom": 154,
+    "left": 374,
+    "width": 88
+   }
+  ]
+ }
+}
