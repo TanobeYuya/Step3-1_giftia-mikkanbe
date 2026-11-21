@@ -1,0 +1,18 @@
+TC-25・28・15 の商品: ['G0091', 'G0200', 'G0244']
+PASS TC-25 G0091 toMother の件数 = product_facts  API 2 facts 2 reviewTotal 7
+PASS TC-28 G0091 segments をつなげると原文と一致  7件 不一致 []
+PASS TC-25 G0200 toMother の件数 = product_facts  API 4 facts 4 reviewTotal 16
+PASS TC-28 G0200 segments をつなげると原文と一致  16件 不一致 []
+PASS TC-25 G0244 toMother の件数 = product_facts  API 2 facts 2 reviewTotal 9
+PASS TC-28 G0244 segments をつなげると原文と一致  9件 不一致 []
+
+--- 最初の確認（15商品）：「4種類とも出る」まで求めたとき ---
+PASS TC-17（15商品）sentiment が 5.2 の決め方と一致  341件 不一致 0
+FAIL TC-17（15商品）4種類とも出る  件数 {'positive': 311, 'negative': 3, 'mixed': 27, 'neutral': 0}
+
+--- 60商品に広げた確認 ---
+PASS TC-17（60商品）sentiment が 5.2 の決め方と一致  825件 不一致 0
+PASS TC-17（60商品）4種類とも出る  件数 {'positive': 739, 'negative': 4, 'mixed': 81, 'neutral': 1}
+PASS TC-18（15商品）mark が辞書の use_scene と一致  mark の文 87件 不一致 0
+
+不合格の項目: なし
