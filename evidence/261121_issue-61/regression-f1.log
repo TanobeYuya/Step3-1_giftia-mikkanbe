@@ -1,0 +1,32 @@
+PASS TC-15 商品名・価格・説明文 
+PASS TC-29 最初は10件 件数=10
+PASS TC-15 先頭2件に「母に贈った人」 
+PASS TC-15 3件目以降に印なし 
+PASS TC-29 もっと見る（10 / 25） 
+PASS SP-14 30件超の注記 
+PASS TC-17 positive=薄い青 rgb(232, 241, 251)
+PASS TC-17 negative=薄い赤 rgb(253, 236, 236)
+PASS TC-17 mixed=薄いグレー rgb(242, 243, 245)
+PASS TC-17 neutral=薄いグレー rgb(242, 243, 245)
+PASS TC-17 文字：よかった点／気になる点／よかった点・気になる点／なし 
+PASS TC-18 mark は1か所だけ 
+PASS TC-18 背景 #fcc419・太字 {"bg":"rgb(252, 196, 25)","w":"700","text":"毎日使ってくれているようです。"}
+PASS TC-18 本文は原文のまま 
+PASS TC-29 押すと20件・もっと見る（20 / 25） 
+PASS TC-29 全部（25件）出たらボタンが消える 
+PASS TC-15 ×で閉じる・検索結果が残る 
+PASS TC-29 開き直すと10件に戻る 
+PASS TC-15 Esc で閉じる 
+PASS SP-12 モーダルの中を押しても閉じない 
+PASS TC-15 外側で閉じる 
+PASS SP-12 Enter で開く 
+PASS TC-16 「まだレビューがありません。」と説明文 
+PASS SP-12 Space で開く 
+PASS TC-30② モーダル内に「商品が見つかりませんでした。」・自動では閉じない 
+PASS TC-30② 閉じると検索結果が残っている 
+PASS TC-20 文字としてそのまま出る <script>alert(1)</script><img src=x onerror=alert(2)>
+PASS TC-20 alert が出ない・img が作られない alert=0
+PASS SP-12 500 は「レビューを読み込めませんでした。」 
+PASS TC-31 ダークでもライトと同じ色 {"modal":"rgb(255, 255, 255)|rgb(31, 41, 51)","pos":"rgb(232, 241, 251)|rgb(31, 41, 51)","neg":"rgb(253, 236, 236)|rgb(31, 41, 51)","mix":"rgb(242, 243, 245)|rgb(31, 41, 51)","mark":"rgb(252, 196, 25)|rgb(31, 41, 51)","input":"rgb(255, 255, 255)|rgb(0, 0, 0)","select":"rgb(255, 255, 255)|rgb(0, 0, 0)","scheme":"light"}
+
+合計 30 件、失敗 0 件
