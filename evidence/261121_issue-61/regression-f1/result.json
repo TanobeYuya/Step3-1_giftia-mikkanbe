@@ -1,0 +1,152 @@
+[
+  {
+    "name": "TC-15 商品名・価格・説明文",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-29 最初は10件",
+    "pass": true,
+    "note": "件数=10"
+  },
+  {
+    "name": "TC-15 先頭2件に「母に贈った人」",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-15 3件目以降に印なし",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-29 もっと見る（10 / 25）",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "SP-14 30件超の注記",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-17 positive=薄い青",
+    "pass": true,
+    "note": "rgb(232, 241, 251)"
+  },
+  {
+    "name": "TC-17 negative=薄い赤",
+    "pass": true,
+    "note": "rgb(253, 236, 236)"
+  },
+  {
+    "name": "TC-17 mixed=薄いグレー",
+    "pass": true,
+    "note": "rgb(242, 243, 245)"
+  },
+  {
+    "name": "TC-17 neutral=薄いグレー",
+    "pass": true,
+    "note": "rgb(242, 243, 245)"
+  },
+  {
+    "name": "TC-17 文字：よかった点／気になる点／よかった点・気になる点／なし",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-18 mark は1か所だけ",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-18 背景 #fcc419・太字",
+    "pass": true,
+    "note": "{\"bg\":\"rgb(252, 196, 25)\",\"w\":\"700\",\"text\":\"毎日使ってくれているようです。\"}"
+  },
+  {
+    "name": "TC-18 本文は原文のまま",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-29 押すと20件・もっと見る（20 / 25）",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-29 全部（25件）出たらボタンが消える",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-15 ×で閉じる・検索結果が残る",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-29 開き直すと10件に戻る",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-15 Esc で閉じる",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "SP-12 モーダルの中を押しても閉じない",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-15 外側で閉じる",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "SP-12 Enter で開く",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-16 「まだレビューがありません。」と説明文",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "SP-12 Space で開く",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-30② モーダル内に「商品が見つかりませんでした。」・自動では閉じない",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-30② 閉じると検索結果が残っている",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-20 文字としてそのまま出る",
+    "pass": true,
+    "note": "<script>alert(1)</script><img src=x onerror=alert(2)>"
+  },
+  {
+    "name": "TC-20 alert が出ない・img が作られない",
+    "pass": true,
+    "note": "alert=0"
+  },
+  {
+    "name": "SP-12 500 は「レビューを読み込めませんでした。」",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-31 ダークでもライトと同じ色",
+    "pass": true,
+    "note": "{\"modal\":\"rgb(255, 255, 255)|rgb(31, 41, 51)\",\"pos\":\"rgb(232, 241, 251)|rgb(31, 41, 51)\",\"neg\":\"rgb(253, 236, 236)|rgb(31, 41, 51)\",\"mix\":\"rgb(242, 243, 245)|rgb(31, 41, 51)\",\"mark\":\"rgb(252, 196, 25)|rgb(31, 41, 51)\",\"input\":\"rgb(255, 255, 255)|rgb(0, 0, 0)\",\"select\":\"rgb(255, 255, 255)|rgb(0, 0, 0)\",\"scheme\":\"light\"}"
+  }
+]

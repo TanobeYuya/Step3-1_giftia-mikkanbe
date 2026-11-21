@@ -1,0 +1,72 @@
+[
+  {
+    "name": "TC-27 検索中はボタンの文字が「検索中…」",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-27 検索中はボタンが押せない（disabled）",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-27 検索中にボタンを押しても、API は1回しか呼ばれない",
+    "pass": true,
+    "note": "calls=[\"slow\"]"
+  },
+  {
+    "name": "TC-27 2回目（最後）の検索の結果が出る",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-27 遅れて届いた1回目の応答で書き換わらない",
+    "pass": true,
+    "note": "A=0 B=1"
+  },
+  {
+    "name": "TC-27 結果が出たあとはボタンが「検索」に戻り、押せる",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-27 API の呼び出しは slow → fast の2回",
+    "pass": true,
+    "note": "[\"slow\",\"fast\"]"
+  },
+  {
+    "name": "TC-30① 422 のとき指定の文言が出る",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-30① 「APIにつながりません」は出ない",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-30① 前の検索結果は消える",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-30① 失敗後はボタンが「検索」に戻る",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "422 以外（500）はいままでどおり「APIにつながりません：HTTP 500」",
+    "pass": true,
+    "note": "APIにつながりません：HTTP 500"
+  },
+  {
+    "name": "キーワード欄に maxlength=100 が付いている",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "101文字を入れても100文字までしか入らない",
+    "pass": true,
+    "note": "length=100"
+  }
+]
