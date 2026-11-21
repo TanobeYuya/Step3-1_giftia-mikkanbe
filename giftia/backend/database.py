@@ -9,6 +9,7 @@
 #   DB_SSL_CA   = 配布された SSL証明書のパス（任意。入れると Workbench の「Verify CA」と同じく相手を確かめる）
 
 import os
+import threading
 from contextlib import contextmanager
 
 import pymysql
@@ -48,12 +49,15 @@ def get_connection():
 
 # 接続プール（DS-06 段階②）。接続の確立に約1.3秒かかるため、作った接続を使い回す。最初に使うときに作る
 _pool = None
+_pool_lock = threading.Lock()  # 同時に2つのリクエストがプールを作らないようにする
 
 
 def _get_pool():
     global _pool
     if _pool is None:
-        _pool = PooledDB(creator=pymysql, mincached=1, maxcached=4, **_connect_kwargs())
+        with _pool_lock:
+            if _pool is None:  # ロックを待つ間に、他のリクエストが作り終えていることがある
+                _pool = PooledDB(creator=pymysql, mincached=1, maxcached=4, **_connect_kwargs())
     return _pool
 
 
