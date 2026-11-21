@@ -2,8 +2,9 @@
 // 1週目との違い：①searchGifts が FastAPI を呼ぶ（async/await）②入力した条件を渡す ③つながらないときの表示
 "use client"; // ← ブラウザで動く合図。useState や onClick を使う画面に必要
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import ResultCard from "./ResultCard";
+import ProductModal from "./ProductModal";
 import { searchGifts, type Gift } from "@/lib/api";
 import { RECIPIENT_OPTIONS, SCENE_OPTIONS } from "@/lib/options";
 
@@ -18,6 +19,9 @@ export default function Home() {
   const [priceBand, setPriceBand] = useState("");                         // 価格帯（取引先へのお礼）
   const [results, setResults] = useState<Gift[] | null>(null);            // 検索結果
   const [error, setError] = useState("");                                 // つながらないときの文言
+  const [openId, setOpenId] = useState<string | null>(null);              // モーダルを開いている商品の ID（null なら閉じている）
+  // useCallback：同じ関数を使い回す（ProductModal の Esc キーの付け外しが、描き直しのたびに起きないようにする）
+  const closeModal = useCallback(() => setOpenId(null), []);
 
   // ② 検索ボタンの処理（API に聞くので、結果が返るまで待つ＝async/await）
   async function onSearch(e: React.FormEvent) {
@@ -90,10 +94,13 @@ export default function Home() {
         <section>
           <p className="summary">上位 {results.length} 件</p>
           <div className="grid">
-            {results.map((g, i) => <ResultCard key={g.id} gift={g} rank={i + 1} />)}
+            {results.map((g, i) => <ResultCard key={g.id} gift={g} rank={i + 1} onOpen={setOpenId} />)}
           </div>
         </section>
       )}
+
+      {/* openId があるときだけモーダルを出す。閉じると null に戻り、検索結果（results）はそのまま残る */}
+      {openId && <ProductModal productId={openId} onClose={closeModal} />}
     </main>
   );
 }
