@@ -1,0 +1,142 @@
+[
+  {
+    "name": "実 API を呼んでいる（モックでない）",
+    "pass": true,
+    "note": "200 G3759"
+  },
+  {
+    "name": "TC-15 商品名・価格・説明文",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-15 見出しに件数（reviewTotal=163）",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-29 最初は10件（API は 30 件を返した）",
+    "pass": true,
+    "note": "件数=10"
+  },
+  {
+    "name": "SP-14 注記（全件数 > 届いた件数）",
+    "pass": true,
+    "note": "新しい順に30件を表示しています（母に贈ったレビューを先頭）"
+  },
+  {
+    "name": "TC-15 母に贈った人の印が、API の toMother と先頭10件で一致",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-17 背景色が、API の sentiment と先頭10件で一致",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-17 文字（よかった点／気になる点…）が先頭10件で一致",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-28相当 画面の本文が、API の segments をつなげた原文と先頭10件で一致",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-18 mark の数が、API の mark=true の数と先頭10件で一致",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-18 背景 #fcc419・太字",
+    "pass": true,
+    "note": "{\"bg\":\"rgb(252, 196, 25)\",\"w\":\"700\"}"
+  },
+  {
+    "name": "TC-29 もっと見る（10 / 30）",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-29 押すと20件・もっと見る（20 / 30）",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-29 全部（30件）出たらボタンが消える",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-15 ×で閉じる・検索結果が残る",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-29 開き直すと10件に戻る",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-15 Esc で閉じる",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "SP-12 モーダルの中を押しても閉じない",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-15 外側で閉じる",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-29 7件すべて出る・もっと見るなし・SP-14 の注記なし",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "SP-12 Enter で開く",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-16 「まだレビューがありません。」と説明文",
+    "pass": true,
+    "note": "reviewTotal=0"
+  },
+  {
+    "name": "SP-12 Space で開く",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-30② 実 API の 404 で「商品が見つかりませんでした。」・自動では閉じない",
+    "pass": true,
+    "note": "404 G9999"
+  },
+  {
+    "name": "TC-30② 閉じると検索結果が残っている",
+    "pass": true,
+    "note": ""
+  },
+  {
+    "name": "TC-17 negative の背景色・文字（G0604 の RV0003629）",
+    "pass": true,
+    "note": "rgb(253, 236, 236) / 気になる点 評価 3"
+  },
+  {
+    "name": "TC-17 neutral の背景色・文字（G0337 の RV0000640）",
+    "pass": true,
+    "note": "rgb(242, 243, 245) / 評価 3"
+  },
+  {
+    "name": "TC-31 ダークでもライトと同じ色",
+    "pass": true,
+    "note": "{\"modal\":\"rgb(255, 255, 255)|rgb(31, 41, 51)\",\"pos\":\"rgb(232, 241, 251)|rgb(31, 41, 51)\",\"neg\":null,\"mix\":\"rgb(242, 243, 245)|rgb(31, 41, 51)\",\"mark\":\"rgb(252, 196, 25)|rgb(31, 41, 51)\",\"input\":\"rgb(255, 255, 255)|rgb(0, 0, 0)\",\"select\":\"rgb(255, 255, 255)|rgb(0, 0, 0)\",\"scheme\":\"light\"}"
+  }
+]

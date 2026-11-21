@@ -50,7 +50,7 @@
       }
     ],
     "advisors": [],
-    "issueCloser": ""
+    "issueCloser": "PM"
   },
   "git": {
     "baseBranch": "main",
