@@ -45,7 +45,7 @@ Dependabot の警告は、next の CVE-2026-119350 が `package.json` と `packa
 | 確認 | 結果 | 証拠 |
 | --- | --- | --- |
 | `npm audit` | found 0 vulnerabilities | [audit-after.log](261121_issue-82/audit-after.log) |
-| `npm run build` | 成功（exit 0。Next.js 16.4.5、3ページ） | [build-after.log](261121_issue-82/build-after.log) |
+| `npm run build` | 成功（exit 0。Next.js 16.4.5。ルートは /・/_not-found・/about の3つ） | [build-after.log](261121_issue-82/build-after.log) |
 | `npm run lint` | 成功（exit 0。指摘なし） | [lint-after.log](261121_issue-82/lint-after.log) |
 | 画面と API の HTTP | `/`・`/about`・JS がすべて 200。`/api/search`（母・誕生日）が 200。商品の詳細 G3759 が 200、G9999 が 404 | [http-check.log](261121_issue-82/http-check.log) |
 | 画面の操作（検索とモーダル） | べーがブラウザで確かめた。母・誕生日で検索して結果カードが出て、カードからレビューのモーダルが開いた | 目視（スクリーンショットは残していない） |
