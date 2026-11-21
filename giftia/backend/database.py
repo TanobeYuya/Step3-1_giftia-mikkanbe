@@ -57,7 +57,8 @@ def _get_pool():
     if _pool is None:
         with _pool_lock:
             if _pool is None:  # ロックを待つ間に、他のリクエストが作り終えていることがある
-                _pool = PooledDB(creator=pymysql, mincached=1, maxcached=4, **_connect_kwargs())
+                # maxconnections：作る接続の数の上限。blocking=True：上限に達したら、エラーにせず空くまで待つ
+                _pool = PooledDB(creator=pymysql, mincached=1, maxcached=4, maxconnections=4, blocking=True, **_connect_kwargs())
     return _pool
 
 
