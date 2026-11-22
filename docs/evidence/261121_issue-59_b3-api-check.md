@@ -58,3 +58,52 @@ PASS  /api/search?recipient=mother&scene=誕生日 が 200（変更前と同じ�
 - 画面の部分（TC-15 の押す・閉じる、TC-16・TC-17・TC-18 の見た目）：F1（#60）の範囲
 - 速さ：DS-05 に応答時間の基準はなく、この PR では測っていない
 - 自動テストのコード：このリポジトリにはテストの置き場がなく、確認用のスクリプトは PR に含めていない
+
+## 追記：確認のやり直し方と、初回 FAIL の再現（2026-11-21、#77 のレビューを受けて）
+
+べーさんの #77 の Approve コメントの依頼（初回 FAIL の出力・60 商品の選び方・確認に使ったコマンドか SQL）に答える。最初の確認で使ったスクリプトは残っていなかったため、TC-17・18・25・28 の確認を、スクリプトに書き直してもう一度流した。
+
+- スクリプト：[check_b3.py](261121_issue-59/check_b3.py)（全文）、結果のログ：[check_b3.log](261121_issue-59/check_b3.log)
+- 実行：`giftia/backend` で `.venv\Scripts\python.exe ..\..\docs\evidence\261121_issue-59\check_b3.py`（Mac は `.venv/bin/python ../../docs/evidence/261121_issue-59/check_b3.py`）
+- 方法：班の DB に SELECT だけを流す。API の関数 `product_detail()` を直接呼ぶ（HTTP の層は通らない。本物の `main.py`・プール・SQL を通る）
+- 期待値は、API の実装を通らずに出す。`reviews.comment` を別に取り、`review_sentences` から polarity・use_scene を引いて、5.2 の決め方で計算した
+
+### 商品の選び方（SQL）
+
+```sql
+-- TC-25・28・15：本文のあるレビューが30件以下で、母のレビューが2〜12件ある商品を、商品IDの順に3つ
+SELECT f.product_id FROM product_facts AS f
+WHERE f.fact = %s AND f.value BETWEEN 2 AND 12
+  AND (SELECT COUNT(*) FROM reviews r WHERE r.product_id = f.product_id AND r.comment IS NOT NULL AND TRIM(r.comment) <> '') <= 30
+ORDER BY f.product_id LIMIT 3;
+
+-- TC-17・18：母のレビューの件数が多い順（同じなら商品ID）に N 商品。N は 15（初回）と 60
+SELECT product_id FROM product_facts WHERE fact = %s ORDER BY value DESC, product_id LIMIT %s;
+```
+
+`%s` の `fact` は、`main.py` の `RECIPIENTS["mother"]["fact"]`（母に贈ったレビューの件数を持つ fact 名）。
+
+### 初回 FAIL の再現（15 商品）
+
+最初の確認は、15 商品を選び、「4 種類とも出る」まで求めて FAIL になった。同じ条件で再現した。
+
+```text
+PASS TC-17（15商品）sentiment が 5.2 の決め方と一致  341件 不一致 0
+FAIL TC-17（15商品）4種類とも出る  件数 {'positive': 311, 'negative': 3, 'mixed': 27, 'neutral': 0}
+```
+
+- 5.2 との不一致は 0 件で、コードの誤りではない。ニュートラルのレビューが 15 商品の中になかっただけ
+- 60 商品に広げると、4 種類とも出た（下の結果）。「4 種類とも出る」という項目の条件はゆるめていない
+
+### やり直した結果
+
+```text
+PASS TC-17（60商品）sentiment が 5.2 の決め方と一致  825件 不一致 0
+PASS TC-17（60商品）4種類とも出る  件数 {'positive': 739, 'negative': 4, 'mixed': 81, 'neutral': 1}
+PASS TC-18（15商品）mark が辞書の use_scene と一致  mark の文 87件 不一致 0
+PASS TC-25 G0091 / G0200 / G0244  toMother の件数 = product_facts（2・4・2）
+PASS TC-28 G0091 / G0200 / G0244  segments をつなげると原文と一致（7・16・9件、不一致なし）
+```
+
+- 上の記録（824 件、positive 741・mixed 79）と、今回（825 件、positive 739・mixed 81）は少し違う。5.2 との不一致は、どちらも 0 件。違いの原因は未確認（DB のレビューが動いたか、選んだ商品が違った可能性がある）
+- ログの末尾の「不合格の項目: なし」には、初回の 15 商品の FAIL（再現用）は数えていない
