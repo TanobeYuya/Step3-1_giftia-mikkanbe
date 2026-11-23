@@ -47,13 +47,17 @@ d.node(1320, 220, 270, 80, "products ほか", "商品・シーン・レビュー
 d.node(1320, 360, 270, 80, "★ product_facts", "母へのレビュー件数の行", "db", highlight=True)
 d.node(1320, 500, 270, 80, "★ review_sentences　NEW", "文の辞書", "db", highlight=True)
 
+# 番号はシーケンス図（2_シーケンス図）と同じ。利用者の操作（①⑤）と、利用者に返る戻り（⑨）も描く
 d.edge([(84, 345), (170, 345), (170, 260), (280, 260)], "req");  d.num(100, 300, "① 条件を選ぶ", align="left")
-d.edge([(600, 250), (790, 250)], "req");                         d.num(650, 228, "② 検索", align="left", bg=None)
+d.edge([(600, 240), (790, 240)], "req");                         d.num(650, 218, "② 検索", align="left", bg=None)
 d.edge([(1130, 250), (1320, 250)], "req");                       d.num(1180, 228, "③ SELECT", align="left", bg=None)
-d.edge([(440, 300), (440, 360)], "res");                         d.num(450, 320, "④ 結果", align="left", bg=None)
-d.edge([(440, 440), (440, 500)], "req");                         d.num(450, 460, "⑤ 押す", align="left", bg=None)
-d.edge([(600, 540), (790, 540)], "req");                         d.num(650, 518, "⑥ 詳細", align="left", bg=None)
+d.edge([(790, 285), (720, 285), (720, 400), (600, 400)], "res"); d.num(645, 330, "④ 結果", align="left", bg=None)
+d.edge([(84, 380), (262, 380), (262, 410), (280, 410)], "req");  d.num(116, 390, "⑤ カードを押す", align="left")
+d.text(450, 455, 80, 30, "開く ↓", size=12, align="left")
+d.edge([(600, 525), (790, 525)], "req");                         d.num(650, 503, "⑥ 詳細", align="left", bg=None)
 d.edge([(1130, 540), (1320, 540)], "req");                       d.num(1180, 518, "⑦ SELECT", align="left", bg=None)
+d.edge([(790, 565), (600, 565)], "res");                         d.num(645, 572, "⑧ 返す", align="left", bg=None)
+d.edge([(280, 560), (60, 560), (60, 470)], "res");               d.num(90, 570, "⑨ 読む", align="left")
 d.node(250, 660, 1370, 70, "実装中：Phase2 ② 相談モード", "3問に答えると、生成AIがキーワードに直し、既存の検索で商品を探す（表は足さない）", "api", muted=True)
 run(d, "1_アーキ図", "アーキ図")
 
