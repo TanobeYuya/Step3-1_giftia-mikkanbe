@@ -7,8 +7,8 @@ sys.path.insert(0, os.path.expanduser("~/.claude/skills/drawio-diagram/scripts")
 from drawio_kit import Diagram  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DRAWIO = os.path.join(HERE, "..", "drawio", "依存関係図.drawio")
-PNG = os.path.join(HERE, "..", "png", "依存関係図_1_Phase2-1.png")
+DRAWIO = os.path.join(HERE, "..", "01_設計書", "依存関係図.drawio")
+PNG = os.path.join(HERE, "..", "01_設計書", "依存関係図_1_Phase2-1.png")
 
 d = Diagram(
     "Phase2 ① の課題の依存関係図（2026-11-19 時点）",
